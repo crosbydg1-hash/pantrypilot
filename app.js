@@ -15,6 +15,18 @@
     set(k, v) { try { localStorage.setItem('pantrypilot:' + k, JSON.stringify(v)); } catch { /* storage blocked: keep working in memory */ } }
   };
 
+  /* ---------- light / dark mode: prefs.theme is 'auto' (match the phone), 'light' or 'dark' ---------- */
+  const THEMES = [['auto', 'Auto', 'Matches your phone or computer'], ['light', 'Light', 'Bright and clean'], ['dark', 'Dark', 'Easy on the eyes at night']];
+  const darkQuery = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
+  function applyTheme(t) {
+    const root = document.documentElement;
+    if (t === 'light' || t === 'dark') root.dataset.theme = t; else delete root.dataset.theme;
+    const dark = t === 'dark' || (t !== 'light' && !!darkQuery?.matches);
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0E1614' : '#2B656B');
+  }
+  const themeChips = (cur, action) => `<div class="theme-picks" role="radiogroup" aria-label="Appearance">${THEMES.map(([v, l, sub]) =>
+    `<button type="button" class="theme-pick" role="radio" data-action="${action}" data-v="${v}" aria-checked="${cur === v}" aria-pressed="${cur === v}"><span class="swatch ${v}" aria-hidden="true"></span><b>${l}</b><span>${sub}</span></button>`).join('')}</div>`;
+
   /* ---------- icons ---------- */
   const P = {
     kitchen: '<path d="M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/><path d="M2 10h20"/><path d="M9 6.5c0-1.2 1-1.5 1-2.7M14 6.5c0-1.2 1-1.5 1-2.7"/>',
@@ -44,7 +56,7 @@
     jarIn: '<path d="M12 4v10M8 10l4 4 4-4"/><path d="M5 15v3.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V15"/>'
   };
   const icon = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${P[n]}</svg>`;
-  const LOGO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7.5" y="2.6" width="9" height="2.8" rx="1" fill="currentColor" stroke="none"/><path d="M8.6 5.4h6.8l1.4 2.1a3 3 0 0 1 .7 1.9v9a3 3 0 0 1-3 3H9.5a3 3 0 0 1-3-3v-9a3 3 0 0 1 .7-1.9z"/><path d="M12 9.2 14.2 14H9.8z" fill="#F08A5D" stroke="none"/><path d="M9.8 14h4.4L12 18.8z" fill="currentColor" stroke="none"/></svg>';
+  const LOGO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13.4a2.8 2.8 0 0 1 1-5.4 3.2 3.2 0 0 1 6 0 2.8 2.8 0 0 1 1 5.4z"/><path d="M8 13.4h8v3H8z"/><path d="M2.8 3.5v3.4a1.7 1.7 0 0 0 3.4 0V3.5M4.5 3.5v4.2M4.5 8.6v11.9"/><rect x="17.6" y="3.3" width="3.8" height="5.4" rx=".7"/><path d="M19.5 5v2M19.5 8.7v11.8"/></svg>';
 
   /* ---------- ingredients: one name per real-world thing ---------- */
   const STRIP = /^(fresh|ripe|cooked|toasted|melted|unsalted|bone-in|fine|flaky|whole|shelled|mixed)\s+/;
@@ -909,7 +921,7 @@
       });
       state.plan = merged;
     }
-    if (cloud.prefs && typeof cloud.prefs === 'object' && Object.keys(cloud.prefs).length) state.prefs = { ...state.prefs, ...cloud.prefs };
+    if (cloud.prefs && typeof cloud.prefs === 'object' && Object.keys(cloud.prefs).length) { state.prefs = { ...state.prefs, ...cloud.prefs }; applyTheme(state.prefs.theme); }
     if (Array.isArray(cloud.cooked)) {
       const seen = new Set(cloud.cooked.map(c => c.id + c.at));
       state.cooked = [...cloud.cooked, ...state.cooked.filter(c => !seen.has(c.id + c.at))].slice(-2000);
@@ -928,7 +940,7 @@
     setUserRecipes([]); resetImport();
     state.pantry = new Set(STARTER.filter(x => INGREDIENTS.includes(x)));
     state.starter = true; state.favs = new Set(); state.list = []; state.plan = {};
-    state.prefs = {}; state.cooked = []; state.gifts = []; state.myRatings = {}; state.pantryDates = {};
+    state.prefs = {}; applyTheme('auto'); state.cooked = []; state.gifts = []; state.myRatings = {}; state.pantryDates = {};
     lockGifts();
     leaveHouseholdLocal();
     ['pantry', 'favs', 'list', 'plan', 'prefs', 'cooked', 'gifts', 'pantryDates'].forEach(k => { try { localStorage.removeItem('pantrypilot:' + k); } catch { } });
@@ -991,6 +1003,7 @@
         : `<span>Remove ads and import recipes from links and photos.</span><button type="button" class="btn small primary" data-action="paywall">Get Pro</button>`}</div>
       ${profileFormHTML(u)}
       ${inviteCardHTML(u)}
+      <div><span class="lbl">Appearance</span>${themeChips(state.prefs.theme || 'auto', 'set-theme')}</div>
       <div class="acct-actions"><a class="btn small" href="#welcome" data-action="close-sheet">Edit food preferences</a>${u.isAdmin ? '<a class="btn small" href="#admin" data-action="close-sheet">Moderation</a>' : ''}</div>
       <label class="switch-row" for="weeklyEmail"><input type="checkbox" id="weeklyEmail" ${state.prefs.weekly_email ? 'checked' : ''}><span><b>Weekly dinner ideas</b><span class="note">An email each Sunday with 3 dinners you can make from your pantry.</span></span></label>
       <div><span class="lbl">Blocked people</span><div id="blockedList" class="note">Loading…</div></div>
@@ -1575,14 +1588,17 @@
     }
     return ob.draft;
   }
-  const OB_STEPS = ['pantry', 'diet', 'cook', 'cuisines', 'about', 'pro'];
+  const OB_STEPS = ['look', 'pantry', 'diet', 'cook', 'cuisines', 'about', 'pro'];
   const obSteps = () => OB_STEPS.filter(s => s !== 'pro' || !isPro());
   function viewWelcome() {
     if (!acct.user) return `<div class="page fade-in">${mobileHead()}<div class="panel gate">${icon('users')}<h2>Sign in to set up your kitchen</h2><div class="actions"><button type="button" class="btn primary" data-action="auth-open" data-mode="signup">Create account</button><button type="button" class="btn" data-action="auth-open" data-mode="signin">Sign in</button></div></div></div>`;
     const d = obDraft(), steps = obSteps(), step = steps[Math.min(ob.step, steps.length - 1)], n = Math.min(ob.step, steps.length - 1);
     const chip = (action, v, label, on, cls = '') => `<button type="button" class="chip ${cls}" data-action="${action}" data-v="${esc(v)}" aria-pressed="${on}">${label}</button>`;
     let body = '';
-    if (step === 'pantry') {
+    if (step === 'look') {
+      body = `<h1>Light or dark?</h1><p class="lede">Pick how PantryPilot looks. You can change this any time in Your account.</p>
+        ${themeChips(state.prefs.theme || 'auto', 'set-theme')}`;
+    } else if (step === 'pantry') {
       const tiles = STAPLE_TILES.filter(k => INGREDIENTS.includes(k));
       body = `<h1>What's in your kitchen?</h1><p class="lede">Tap everything you have right now. PantryPilot uses this to show what you can cook tonight. You can add the rest later in the Pantry tab.</p>
         <div class="tiles">${tiles.map(k => `<button type="button" class="tile" data-action="ob-pantry" data-v="${esc(k)}" aria-pressed="${state.pantry.has(k)}">${esc(cap(k))}</button>`).join('')}</div>
@@ -1822,6 +1838,10 @@
       case 'ob-diet': obDraft().diet = v; refresh(); break;
       case 'ob-allergy': obDraft().allergies = toggleIn(obDraft().allergies, v); el.setAttribute('aria-pressed', obDraft().allergies.includes(v)); break;
       case 'ob-level': obDraft().level = v; refresh(); break;
+      case 'set-theme':
+        state.prefs = { ...state.prefs, theme: v }; save.prefs(); applyTheme(v);
+        document.querySelectorAll('[data-action="set-theme"]').forEach(b => { b.setAttribute('aria-checked', b.dataset.v === v); b.setAttribute('aria-pressed', b.dataset.v === v); });
+        break;
       case 'ob-house': obDraft().household = +v; refresh(); break;
       case 'ob-cuisine': obDraft().cuisines = toggleIn(obDraft().cuisines, v); el.setAttribute('aria-pressed', obDraft().cuisines.includes(v)); break;
       case 'ob-avatar': obReadAbout(); obDraft().avatar = v; $$('[data-action="ob-avatar"]').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === v)); break;

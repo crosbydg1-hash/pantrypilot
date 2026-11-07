@@ -66,6 +66,7 @@ h2{font-size:22px;margin:28px 0 10px}.top{display:flex;justify-content:space-bet
 @media (prefers-color-scheme:dark){.cta{color:#0A1513}}ul,ol{padding-left:22px}li{margin:6px 0}.panel{background:var(--surface);border-radius:18px;padding:6px 22px 14px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:16px}.grid a{text-decoration:none;color:var(--ink);background:var(--surface);border-radius:14px;overflow:hidden;display:block}
 .grid img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}.grid span{display:block;padding:10px 12px;font-weight:600}footer{margin-top:40px;font-size:13px;color:var(--muted)}
+.more{list-style:none;margin-left:-22px;color:var(--muted)}.gate{margin-top:16px;border:1.5px solid var(--teal)}.gate p{margin:0;color:var(--muted)}
 </style>"""
 
 def head(title, desc, canonical, image=None, extra=''):
@@ -87,8 +88,7 @@ for r in recipes:
           "author": {"@type": "Organization", "name": "PantryPilot"}, "datePublished": "2026-11-06",
           "prepTime": iso_minutes(r['prep_time']), "cookTime": iso_minutes(r['cook_time']), "totalTime": iso_minutes(r['prep_time'] + r['cook_time']),
           "recipeYield": f"{r['servings']} servings", "recipeCategory": CAT.get(r['category'], 'Main course'), "recipeCuisine": CUISINE.get(r.get('cuisine'), 'American'),
-          "keywords": ', '.join(r.get('tags', [])), "recipeIngredient": [line(i) for i in r['ingredients']],
-          "recipeInstructions": [{"@type": "HowToStep", "position": k + 1, "text": t} for k, t in enumerate(r['steps'])],
+          "keywords": ', '.join(r.get('tags', [])),
           "nutrition": {"@type": "NutritionInformation", "calories": f"{r['calories']} calories",
                         **({"proteinContent": f"{n[0]} g", "carbohydrateContent": f"{n[1]} g", "fatContent": f"{n[2]} g"} if n else {})}}
     if img: ld["image"] = [img]
@@ -99,9 +99,9 @@ for r in recipes:
 <div class="meta"><span>Prep {r['prep_time']} min</span><span>Cook {r['cook_time']} min</span><span>Serves {r['servings']}</span><span>{r['calories']} kcal per serving</span>{f'<span>{n[0]} g protein · {n[1]} g carbs · {n[2]} g fat</span>' if n else ''}</div>
 {f'<img class="photo" src="../../{esc(r["image"])}" alt="{esc(r["title"])}">' if img else ''}
 {credit(r)}
-<a class="cta" href="../../#recipe-{esc(r['id'])}">Open in PantryPilot to scale, plan and shop</a>
-<div class="panel"><h2>Ingredients</h2><ul>{''.join(f'<li>{esc(line(i))}</li>' for i in r['ingredients'])}</ul></div>
-<div class="panel" style="margin-top:16px"><h2>Method</h2><ol>{''.join(f'<li>{esc(t)}</li>' for t in r['steps'])}</ol></div>
+<div class="panel"><h2>Ingredients</h2><ul>{''.join(f'<li>{esc(line(i))}</li>' for i in r['ingredients'][:3])}{f'<li class="more">+ {len(r["ingredients"]) - 3} more</li>' if len(r['ingredients']) > 3 else ''}</ul></div>
+<div class="panel gate"><h2>See the full recipe</h2><p>Every ingredient and all {len(r['steps'])} steps are in PantryPilot. Create a free account to see them, scale the servings, plan it into your week and add it to your shopping list.</p>
+<a class="cta" href="../../#recipe-{esc(r['id'])}">Get the full recipe, free</a></div>
 <footer>From <a href="../../">PantryPilot</a>, the app that shows what you can cook with what's in your pantry. · <a href="../../privacy.html">Privacy</a></footer>
 </main></body></html>"""
     d = out_dir / 'recipes' / s; d.mkdir(parents=True, exist_ok=True)
@@ -109,7 +109,7 @@ for r in recipes:
     pages.append((s, r, url))
 
 index = head('All recipes · PantryPilot', f"{len(pages)} home-cooking recipes from PantryPilot: breakfasts, dinners, sides, appetizers, desserts and drinks.", f"{site}/recipes/").replace('../../icons', '../icons') + f"""
-<div class="top"><a href="../#kitchen">← Open PantryPilot</a></div><h1>All recipes</h1><p>{len(pages)} recipes. Open any of them in PantryPilot to scale servings, check your pantry and build a shopping list.</p>
+<div class="top"><a href="../#kitchen">← Open PantryPilot</a></div><h1>All recipes</h1><p>{len(pages)} recipes. Create a free PantryPilot account to see each one in full, scale servings, check your pantry and build a shopping list.</p>
 <div class="grid">{''.join(f'<a href="{s}/"><img src="../{esc(r["image"])}" alt="" loading="lazy"><span>{esc(r["title"])}</span></a>' for s, r, _ in pages if r.get('image'))}</div>
 <footer><a href="../privacy.html">Privacy</a></footer></main></body></html>"""
 (out_dir / 'recipes').mkdir(parents=True, exist_ok=True)

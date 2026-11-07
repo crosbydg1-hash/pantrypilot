@@ -7,3 +7,4 @@ __pycache__/
 # Never commit keys (none are stored in this folder, but just in case)
 .env
 *.key
+marketing/*.zip

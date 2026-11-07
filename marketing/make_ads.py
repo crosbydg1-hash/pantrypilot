@@ -12,7 +12,7 @@ SRC.mkdir(exist_ok=True); OUT.mkdir(exist_ok=True)
 CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
 img = lambda name: f'../../img/{name}.jpg'
 
-LOGO = lambda color, size: f'''<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="{color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13.4a2.8 2.8 0 0 1 1-5.4 3.2 3.2 0 0 1 6 0 2.8 2.8 0 0 1 1 5.4z"/><path d="M8 13.4h8v3H8z"/><path d="M2.8 3.5v3.4a1.7 1.7 0 0 0 3.4 0V3.5M4.5 3.5v4.2M4.5 8.6v11.9"/><rect x="17.6" y="3.3" width="3.8" height="5.4" rx=".7"/><path d="M19.5 5v2M19.5 8.7v11.8"/></svg>'''
+LOGO = lambda color, size, stroke=1.5: f'''<svg width="{size}" height="{size}" viewBox="0 0 24 24" fill="none" stroke="{color}" stroke-width="{stroke}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13.4a2.8 2.8 0 0 1 1-5.4 3.2 3.2 0 0 1 6 0 2.8 2.8 0 0 1 1 5.4z"/><path d="M8 13.4h8v3H8z"/><path d="M2.8 3.5v3.4a1.7 1.7 0 0 0 3.4 0V3.5M4.5 3.5v4.2M4.5 8.6v11.9"/><rect x="17.6" y="3.3" width="3.8" height="5.4" rx=".7"/><path d="M19.5 5v2M19.5 8.7v11.8"/></svg>'''
 
 BASE = '''<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@500;600;700&display=block">
 <style>
@@ -133,9 +133,16 @@ pin = page(1000, 1500, f'''
   <div style="margin-top:auto;display:flex;justify-content:space-between;align-items:center">{brand(32)}<span class="cta" style="font-size:28px;padding:20px 36px">Free to start</span></div>
 </div>''')
 
+# 7. Instagram / TikTok profile picture: the logo, sized to stay inside the circle crop
+profile = page(1080, 1080, f'''
+<div style="position:absolute;inset:0;background:var(--teal);display:flex;align-items:center;justify-content:center">
+  {LOGO("#fff", 640, 1.1)}
+</div>''')
+
 ADS = [('square-whats-for-dinner', 1080, 1080, sq_pantry), ('square-plan-the-week', 1080, 1080, sq_plan),
        ('story-stop-staring', 1080, 1920, story), ('story-turn-this-into-dinner', 1080, 1920, story2),
-       ('wide-cook-with-what-you-have', 1200, 628, wide), ('pinterest-100-recipes', 1000, 1500, pin)]
+       ('wide-cook-with-what-you-have', 1200, 628, wide), ('pinterest-100-recipes', 1000, 1500, pin),
+       ('profile-picture', 1080, 1080, profile)]
 
 for name, w, h, html in ADS:
     src = SRC / f'{name}.html'

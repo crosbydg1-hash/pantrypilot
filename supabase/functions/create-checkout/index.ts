@@ -19,16 +19,18 @@ const CORS = {
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 
-// Only send people back to sites we know about.
+// Only send people back to sites we know about. GitHub Pages serves the app from a /pantrypilot folder.
+const PAGES = "https://crosbydg1-hash.github.io/pantrypilot";
 function returnBase(origin: string | null): string {
-  const fallback = Deno.env.get("SITE_URL") ?? "https://staging.d1asr1kldrj6f9.amplifyapp.com";
-  if (!origin) return fallback;
+  const site = (Deno.env.get("SITE_URL") ?? PAGES).replace(/\/+$/, "");
+  if (!origin) return site;
   try {
     const u = new URL(origin);
-    const ok = u.hostname.endsWith(".amplifyapp.com") || u.hostname === "localhost" || u.hostname === "127.0.0.1" ||
-      (Deno.env.get("SITE_URL") && u.origin === new URL(Deno.env.get("SITE_URL")!).origin);
-    return ok ? u.origin : fallback;
-  } catch { return fallback; }
+    if (u.origin === new URL(site).origin) return site;
+    if (u.origin === new URL(PAGES).origin) return PAGES;
+    const ok = u.hostname.endsWith(".amplifyapp.com") || u.hostname === "localhost" || u.hostname === "127.0.0.1";
+    return ok ? u.origin : site;
+  } catch { return site; }
 }
 
 Deno.serve(async (req) => {

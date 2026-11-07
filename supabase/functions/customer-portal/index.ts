@@ -26,9 +26,14 @@ Deno.serve(async (req) => {
   const { data: profile } = await admin.from("profiles").select("stripe_customer_id").eq("id", user.id).single();
   if (!profile?.stripe_customer_id) return json(404, { error: "There's no card subscription on this account." });
 
-  let back = Deno.env.get("SITE_URL") ?? "https://staging.d1asr1kldrj6f9.amplifyapp.com";
+  const PAGES = "https://crosbydg1-hash.github.io/pantrypilot";
+  let back = (Deno.env.get("SITE_URL") ?? PAGES).replace(/\/+$/, "");
   const origin = req.headers.get("Origin");
-  try { if (origin && (new URL(origin).hostname.endsWith(".amplifyapp.com") || /^(localhost|127\.0\.0\.1)$/.test(new URL(origin).hostname))) back = origin; } catch { /* keep default */ }
+  try {
+    const h = origin ? new URL(origin).hostname : "";
+    if (origin && new URL(origin).origin === new URL(PAGES).origin) back = PAGES;
+    else if (origin && new URL(origin).origin !== new URL(back).origin && (h.endsWith(".amplifyapp.com") || /^(localhost|127\.0\.0\.1)$/.test(h))) back = origin;
+  } catch { /* keep default */ }
 
   try {
     const stripe = new Stripe(key);

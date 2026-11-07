@@ -1,12 +1,13 @@
 #!/bin/sh
-# Builds the website into dist/stage. Amplify runs this on every push (see amplify.yml);
+# Builds the website into dist/stage. deploy.sh runs this, then publishes to GitHub Pages;
 # build-zip.sh runs it too when you want a zip for a manual upload.
 # SITE_URL is used in the recipe pages and sitemap. On Amplify it defaults to this branch's address.
 set -e
 cd "$(dirname "$0")"
 if [ -z "$SITE_URL" ]; then
-  if [ -n "$AWS_BRANCH" ] && [ -n "$AWS_APP_ID" ]; then SITE_URL="https://$(echo "$AWS_BRANCH" | tr '/' '-').$AWS_APP_ID.amplifyapp.com"
-  else SITE_URL="https://staging.d1asr1kldrj6f9.amplifyapp.com"; fi
+  if [ -n "$GITHUB_REPOSITORY" ]; then SITE_URL="https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}"
+  elif [ -n "$AWS_BRANCH" ] && [ -n "$AWS_APP_ID" ]; then SITE_URL="https://$(echo "$AWS_BRANCH" | tr '/' '-').$AWS_APP_ID.amplifyapp.com"
+  else SITE_URL="https://crosbydg1-hash.github.io/pantrypilot"; fi
 fi
 
 if grep -q "SUPPORT_EMAIL" privacy.html; then

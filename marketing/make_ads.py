@@ -144,11 +144,17 @@ ADS = [('square-whats-for-dinner', 1080, 1080, sq_pantry), ('square-plan-the-wee
        ('wide-cook-with-what-you-have', 1200, 628, wide), ('pinterest-100-recipes', 1000, 1500, pin),
        ('profile-picture', 1080, 1080, profile)]
 
-for name, w, h, html in ADS:
-    src = SRC / f'{name}.html'
+def shoot(name, w, h, html, src_dir=SRC, out_dir=OUT):
+    """Save one HTML design as a PNG with Chrome."""
+    src = src_dir / f'{name}.html'
     src.write_text(html)
-    out = OUT / f'{name}.png'
+    out = out_dir / f'{name}.png'
     subprocess.run([CHROME, '--headless=new', '--disable-gpu', '--hide-scrollbars', '--force-device-scale-factor=1', '--allow-file-access-from-files',
                     '--virtual-time-budget=6000', f'--window-size={w},{h}', f'--screenshot={out}', src.as_uri()],
                    check=True, capture_output=True)
-    print('made', out.name, f'{w}x{h}')
+    return out
+
+if __name__ == '__main__':
+    for name, w, h, html in ADS:
+        shoot(name, w, h, html)
+        print('made', f'{name}.png', f'{w}x{h}')

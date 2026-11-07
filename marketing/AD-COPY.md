@@ -57,7 +57,7 @@ Swap `SITE` for where the ad runs (instagram, tiktok, pinterest, google). That w
 - **Keywords to try:** what can i make with what i have, recipes with ingredients i have, meal planner app, weekly meal plan, pantry recipes
 
 ## Before paying for ads
-- **Privacy contact:** `privacy.html` still shows SUPPORT_EMAIL. Facebook, Google and TikTok check for a privacy policy, so put a real contact email there first.
+- **Privacy contact:** done. The privacy page lists crosbydg1@gmail.com.
 - **Custom domain:** a short name like pantrypilot.app looks more trustworthy in an ad than the github.io address.
 - **Start small:** try $5–10 a day on one platform for a week. Keep the ad that gets the most sign-ups, and stop the rest.
 - **Free first:** post the same images to the PantryPilot Instagram, TikTok and Pinterest accounts. Pinterest is especially good for recipes and costs nothing.

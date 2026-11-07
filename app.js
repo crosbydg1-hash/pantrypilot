@@ -971,9 +971,13 @@
   }
   async function onUser(u) {
     const id = u ? u.id : null;
+    if (!acct.ready && !u && id === acct.lastId) { acct.ready = true; refresh(); return; }
     if (id === acct.lastId) { const proChanged = !!acct.user?.pro !== !!u?.pro; acct.user = u; if (proChanged) refresh(); else renderNav(currentView); return; }
-    const wasSignedIn = acct.lastId != null;
-    acct.lastId = id; acct.user = u; acct.blocked = new Set(); acct.deleteArmed = false;
+    const wasSignedIn = acct.lastId != null, firstCheck = !acct.ready;
+    acct.ready = true;
+    acct.lastId = id; acct.user = u;
+    if (u && /^#?(home)?$/.test(location.hash)) history.replaceState(null, '', location.pathname + location.search + '#kitchen');
+    if (firstCheck && !u) { refresh(); return; } acct.blocked = new Set(); acct.deleteArmed = false;
     if (u) {
       acct.sync = 'saving'; renderNav(currentView);
       try { mergeCloud(await B.loadData()); await B.saveData(snapshot()); acct.sync = 'saved'; }
@@ -982,7 +986,7 @@
       try { setUserRecipes(await B.listRecipes()); } catch { }
       try { state.myRatings = await B.myRatings(); } catch { }
     }
-    if (!u && wasSignedIn) clearLocalData();
+    if (!u && wasSignedIn) { clearLocalData(); history.replaceState(null, '', location.pathname + location.search + '#home'); }
     refresh();
     if (sheet.open && sheet.dataset.kind === 'auth' && u) { closeSheet(); toast(`Signed in as ${esc(u.name)}`); }
     if (u) afterSignIn();
@@ -1942,6 +1946,70 @@
       <div class="actions"><button type="button" class="btn primary" data-action="paywall">Try Pro free for 7 days</button></div>
     </div>`;
 
+  /* ===================================================================
+   * Visitors without an account: a home page and a short preview of a recipe.
+   * Everything else in the app needs an account.
+   * =================================================================== */
+  const PREVIEW_IDS = ['h-pumpkin-pie', 'r-pad-thai', 'x-bruschetta', 'r-green-curry', 'r-hot-chocolate', 'r-yogurt-parfait', 'x-caprese-skewers', 'r-mojito'];
+  const previewRecipes = () => {
+    const picked = PREVIEW_IDS.map(id => byId.get(id)).filter(Boolean);
+    return (picked.length >= 6 ? picked : [...picked, ...RECIPES.filter(r => !picked.includes(r))]).slice(0, 8);
+  };
+  const guestHead = () => `<header class="guest-head"><a class="brand" href="#home">${brandHTML}</a>
+    <div class="guest-actions"><button type="button" class="btn small" data-action="auth-open" data-mode="signin">Sign in</button><button type="button" class="btn small primary" data-action="auth-open" data-mode="signup">Create account</button></div></header>`;
+  const guestCard = r => `<a class="g-card" href="#recipe-${esc(r.id)}"><img src="${esc(r.image)}" alt="" loading="lazy"><span class="g-card-body"><b>${esc(r.title)}</b><span class="note">${fmtMins(r.total)} · ${esc(CAT_LABEL[r.category] || '')}</span></span></a>`;
+  function viewHome() {
+    const feats = [
+      ['kitchen', 'Cook with what you have', 'Tell PantryPilot what is in your kitchen and see every recipe you can make right now.'],
+      ['plan', 'Plan the week', 'Breakfast, lunch and dinner for every day, with notes and how many people you are feeding.'],
+      ['list', 'One shopping list', 'Send the whole week to a list sorted by aisle. Things you already have are left off.'],
+      ['users', 'Cook together', 'Share a live shopping list with your household, and swap recipes with the community.'],
+      ['sparkle', 'Save any recipe', 'Pro imports recipes from Instagram, TikTok, YouTube or a photo of a cookbook page.'],
+      ['play', 'Hands-free cook mode', 'Big steps, built-in timers and voice control, so you never touch your phone with messy hands.']
+    ];
+    const hero = previewRecipes().slice(0, 3);
+    return `<div class="page fade-in home">${guestHead()}
+      <section class="home-hero">
+        <div class="home-copy">
+          <span class="eyebrow">Your kitchen co-pilot</span>
+          <h1>Cook with what you already have.</h1>
+          <p class="lede">PantryPilot shows you what you can make from your pantry, plans your week and builds your shopping list. ${RECIPES.length}+ recipes, free to start.</p>
+          <div class="actions"><button type="button" class="btn primary" data-action="auth-open" data-mode="signup">Create a free account</button><button type="button" class="btn" data-action="auth-open" data-mode="signin">I have an account</button></div>
+        </div>
+        <div class="home-collage" aria-hidden="true">${hero.map((r, i) => `<img class="c${i}" src="${esc(r.image)}" alt="">`).join('')}</div>
+      </section>
+      <section class="home-feats">${feats.map(([ic, t, d]) => `<div class="feat">${icon(ic)}<b>${t}</b><span>${d}</span></div>`).join('')}</section>
+      <section class="lib-section"><div class="section-head"><h2>A taste of what's inside</h2></div>
+        <p class="note">Tap one for a preview. Create a free account to see every recipe in full.</p>
+        <div class="g-grid">${previewRecipes().map(guestCard).join('')}</div>
+      </section>
+      <section class="panel home-cta"><h2>Ready to cook?</h2><p class="lede">It takes a minute to set up your kitchen.</p>
+        <div class="actions"><button type="button" class="btn primary" data-action="auth-open" data-mode="signup">Create a free account</button></div></section>
+      <footer class="home-foot"><a href="privacy.html">Privacy policy</a><a href="recipes/">Browse recipe pages</a></footer>
+    </div>`;
+  }
+  function viewPreview(r) {
+    const shown = r.ingredients.slice(0, 3), more = r.ingredients.length - shown.length;
+    return `<div class="page fade-in home">${guestHead()}
+      <a class="back" href="#home">${icon('left')} Home</a>
+      <article class="preview">
+        <img class="preview-img" src="${esc(r.image)}" alt="${esc(r.title)}">
+        <div class="preview-body">
+          <span class="eyebrow">${esc(CAT_LABEL[r.category] || '')}</span>
+          <h1>${esc(r.title)}</h1>
+          <p class="lede">${esc(r.description || '')}</p>
+          <p class="note num">${fmtMins(r.total)} · serves ${r.servings}${r.calories ? ` · ${r.calories} cal` : ''}</p>
+          <h3 class="ob-h">Ingredients</h3>
+          <ul class="preview-ings">${shown.map(i => `<li>${esc(i.item)}</li>`).join('')}${more > 0 ? `<li class="fade">+ ${more} more</li>` : ''}</ul>
+          <div class="panel gate-card">${icon('users')}<div><b>See the full recipe</b><p class="note">Create a free account to see every ingredient and step, plan it into your week and add it to your shopping list.</p></div>
+            <div class="actions"><button type="button" class="btn primary" data-action="auth-open" data-mode="signup">Create a free account</button><button type="button" class="btn" data-action="auth-open" data-mode="signin">Sign in</button></div></div>
+        </div>
+      </article>
+      <section class="lib-section"><div class="section-head"><h2>More to try</h2></div><div class="g-grid">${previewRecipes().filter(x => x.id !== r.id).slice(0, 4).map(guestCard).join('')}</div></section>
+    </div>`;
+  }
+  const viewWaiting = () => `<div class="page fade-in"><p class="note" style="padding:40px 0;text-align:center"><span class="spin" aria-hidden="true"></span> Loading…</p></div>`;
+
   function viewLoading() {
     return `<div class="page fade-in">${mobileHead()}<a class="back" href="#community">${icon('left')} Community</a><p class="note" id="loadingNote"><span class="spin" aria-hidden="true"></span> Loading recipe…</p></div>`;
   }
@@ -2681,12 +2749,17 @@
     }
     else if (h.startsWith('collection-') && COLLECTIONS.some(c => c.id === h.slice(11))) view = 'collection';
     else if (['pantry', 'plan', 'list', 'saved', 'add', 'welcome', 'community', 'admin'].includes(h)) view = h;
-    const changed = view !== currentView || view === 'recipe';
+    const guest = acct.ready && !acct.user;
+    document.body.classList.toggle('guest', guest);
+    if (!acct.ready) { if (view !== 'recipe') view = 'waiting'; } // don't flash the home page while checking for a signed-in account
+    else if (guest) view = view === 'recipe' && !r.mine && !h.startsWith('recipe-u-') ? 'preview' : 'home';
+    if (!acct.ready && view === 'recipe') view = 'waiting';
+    const changed = view !== currentView || view === 'recipe' || view === 'preview';
     currentView = view;
     renderNav(view);
     const main = $('#main');
     const html = { kitchen: viewKitchen, pantry: viewPantry, plan: viewPlan, list: viewList, saved: viewSaved, add: viewAdd, welcome: viewWelcome, community: viewCommunity, loading: viewLoading, admin: viewAdmin, collection: () => viewCollection(h.slice(11)) }[view];
-    main.innerHTML = view === 'recipe' ? viewRecipe(r) : html();
+    main.innerHTML = view === 'recipe' ? viewRecipe(r) : view === 'preview' ? viewPreview(r) : view === 'home' ? viewHome() : view === 'waiting' ? viewWaiting() : html();
     setTimeout(fillAds, 0);
     if (view === 'kitchen') mountKitchen();
     if (view === 'pantry') mountPantry();
@@ -2694,7 +2767,7 @@
     if (view === 'community') mountCommunity();
     if (view === 'admin') { loadReports(); loadProList(); }
     if (view === 'add') mountAdd();
-    document.title = view === 'recipe' ? `${r.title} · PantryPilot` : view === 'kitchen' ? 'PantryPilot' : `${{ list: 'Shopping list', saved: 'Library', add: 'Add a recipe', welcome: 'Welcome', community: 'Community', loading: 'Loading', admin: 'Moderation', collection: COLLECTIONS.find(c => c.id === h.slice(11))?.title }[view] || cap(view)} · PantryPilot`;
+    document.title = view === 'recipe' || view === 'preview' ? `${r.title} · PantryPilot` : view === 'home' || view === 'waiting' ? 'PantryPilot · Cook with what you already have' : view === 'kitchen' ? 'PantryPilot' : `${{ list: 'Shopping list', saved: 'Library', add: 'Add a recipe', welcome: 'Welcome', community: 'Community', loading: 'Loading', admin: 'Moderation', collection: COLLECTIONS.find(c => c.id === h.slice(11))?.title }[view] || cap(view)} · PantryPilot`;
     if (changed) { window.scrollTo(0, 0); main.focus({ preventScroll: true }); }
   }
   function refresh() { // re-render the current view in place, keeping scroll position

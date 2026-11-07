@@ -1,0 +1,21 @@
+# AWS Amplify build settings: Amplify runs this on every push to GitHub.
+version: 1
+frontend:
+  phases:
+    build:
+      commands:
+        - sh build.sh
+  artifacts:
+    baseDirectory: dist/stage
+    files:
+      - '**/*'
+  customHeaders:
+    # Always check for a new service worker so phones pick up updates quickly.
+    - pattern: 'sw.js'
+      headers:
+        - key: 'Cache-Control'
+          value: 'no-cache'
+    - pattern: 'index.html'
+      headers:
+        - key: 'Cache-Control'
+          value: 'no-cache'

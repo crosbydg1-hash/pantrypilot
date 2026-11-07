@@ -1,0 +1,9 @@
+# Build output (Amplify builds it from the code)
+dist/
+# Mac and Python clutter
+.DS_Store
+__pycache__/
+*.pyc
+# Never commit keys (none are stored in this folder, but just in case)
+.env
+*.key

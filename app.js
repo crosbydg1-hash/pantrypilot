@@ -44,7 +44,7 @@
     jarIn: '<path d="M12 4v10M8 10l4 4 4-4"/><path d="M5 15v3.5A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V15"/>'
   };
   const icon = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${P[n]}</svg>`;
-  const LOGO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 11h14v4.5a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4z"/><path d="M3 11h18"/><path d="M8.5 7.5c1.5-2.2 4-3 7.5-3" stroke-dasharray="1.6 2"/><path d="m15 3 1.6 1.5L15 6"/></svg>';
+  const LOGO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7.5" y="2.6" width="9" height="2.8" rx="1" fill="currentColor" stroke="none"/><path d="M8.6 5.4h6.8l1.4 2.1a3 3 0 0 1 .7 1.9v9a3 3 0 0 1-3 3H9.5a3 3 0 0 1-3-3v-9a3 3 0 0 1 .7-1.9z"/><path d="M12 9.2 14.2 14H9.8z" fill="#F08A5D" stroke="none"/><path d="M9.8 14h4.4L12 18.8z" fill="currentColor" stroke="none"/></svg>';
 
   /* ---------- ingredients: one name per real-world thing ---------- */
   const STRIP = /^(fresh|ripe|cooked|toasted|melted|unsalted|bone-in|fine|flaky|whole|shelled|mixed)\s+/;

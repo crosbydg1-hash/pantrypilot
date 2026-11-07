@@ -168,6 +168,24 @@
     if (t) d.notes[noteKey(slot, id)] = t; else delete d.notes[noteKey(slot, id)];
     if (!Object.keys(d.notes).length) delete d.notes;
   }
+  const PEOPLE_MAX = 24;
+  const clampPeople = n => Math.min(PEOPLE_MAX, Math.max(1, Math.round(+n || 0)));
+  function setPlanPeople(day, slot, id, n) {
+    const d = state.plan[day]; if (!d) return;
+    d.people = d.people || {};
+    if (+n > 0) d.people[noteKey(slot, id)] = clampPeople(n); else delete d.people[noteKey(slot, id)];
+    if (!Object.keys(d.people).length) delete d.people;
+  }
+  // How many people a planned meal is for: what was saved with it, else the usual amount.
+  const planPeople = (day, slot, r) => state.plan[day]?.people?.[noteKey(slot, r.id)] || servingsOf(r);
+  const peopleLabel = n => n === 1 ? '1 person' : n + ' people';
+  const peopleStepper = n => `<div class="people-row"><span class="lbl" id="planPeopleLbl">How many people?</span>
+    <div class="stepper" role="group" aria-labelledby="planPeopleLbl">
+      <button type="button" data-action="ppl-step" data-d="-1" aria-label="Fewer people">${icon('minus')}</button>
+      <output id="planPeople" class="num" data-n="${n}" aria-live="polite">${peopleLabel(n)}</output>
+      <button type="button" data-action="ppl-step" data-d="1" aria-label="More people">${icon('plus')}</button>
+    </div></div>`;
+  const readPeople = () => { const o = $('#planPeople'); return o ? clampPeople(o.dataset.n) : 0; };
   function normalizePlan(p) {
     const out = {};
     if (!p || typeof p !== 'object') return out;
@@ -180,6 +198,11 @@
           const notes = {};
           Object.entries(v.notes).forEach(([key, t]) => { if (typeof t === 'string' && t.trim()) notes[key] = t.slice(0, NOTE_MAX); });
           if (Object.keys(notes).length) d.notes = notes;
+        }
+        if (v.people && typeof v.people === 'object') {
+          const people = {};
+          Object.entries(v.people).forEach(([key, n]) => { if (+n > 0) people[key] = clampPeople(n); });
+          if (Object.keys(people).length) d.people = people;
         }
       }
       if (SLOTS.some(([k]) => d[k].length)) out[day] = d;
@@ -632,8 +655,8 @@
                 return `<div class="slot">
                   <span class="slot-label">${label}</span>
                   <div class="day-meals">
-                    ${meals.map((id, i) => { const r = byId.get(id), note = state.plan[k]?.notes?.[noteKey(slot, id)]; return `<div class="meal"><img src="${esc(r.image)}" alt="" loading="lazy"><div><a href="#recipe-${r.id}">${esc(r.title)}</a><div class="sub">${fmtMins(r.total)} · ${CAT_LABEL[r.category] || ''}</div>${note ? `<div class="meal-note">${esc(note)}</div>` : ''}</div>
-                      <button type="button" class="x" data-action="plan-note" data-day="${k}" data-slot="${slot}" data-id="${esc(id)}" aria-label="${note ? 'Edit' : 'Add a'} note for ${esc(r.title)}" title="${note ? 'Edit note' : 'Add a note'}">${icon('note')}</button>
+                    ${meals.map((id, i) => { const r = byId.get(id), note = state.plan[k]?.notes?.[noteKey(slot, id)]; return `<div class="meal"><img src="${esc(r.image)}" alt="" loading="lazy"><div><a href="#recipe-${r.id}">${esc(r.title)}</a><div class="sub">${fmtMins(r.total)} · ${peopleLabel(planPeople(k, slot, r))}</div>${note ? `<div class="meal-note">${esc(note)}</div>` : ''}</div>
+                      <button type="button" class="x" data-action="plan-note" data-day="${k}" data-slot="${slot}" data-id="${esc(id)}" aria-label="People and note for ${esc(r.title)}" title="People and note">${icon('note')}</button>
                       <button type="button" class="x" data-action="unplan" data-day="${k}" data-slot="${slot}" data-i="${i}" aria-label="Remove ${esc(r.title)} from ${esc(fmtDay(d, { weekday: 'long' }))} ${label.toLowerCase()}">${icon('x')}</button></div>`; }).join('')}
                     <button type="button" class="add-meal" data-action="plan-day" data-day="${k}" data-slot="${slot}" aria-label="Add ${label.toLowerCase()} for ${esc(fmtDay(d, { weekday: 'long' }))}">${icon('plus')} ${meals.length ? 'Add' : 'Add ' + label.toLowerCase()}</button>
                   </div>
@@ -648,8 +671,8 @@
 
   /* ---------- LIST ---------- */
   const onList = r => state.list.some(i => !i.done && i.from.includes(r.title));
-  function addRecipeToList(r, onlyMissing) {
-    const k = servingsOf(r) / r.servings;
+  function addRecipeToList(r, onlyMissing, people) {
+    const k = (people > 0 ? people : servingsOf(r)) / r.servings;
     let added = 0, skipped = 0;
     r.ingredients.forEach(ing => {
       const key = canon(ing.item);
@@ -747,22 +770,22 @@
   const closeSheet = () => { if (sheet.open) sheet.close(); else sheet.removeAttribute('open'); };
   sheet.addEventListener('click', e => { if (e.target === sheet) closeSheet(); });
 
-  function sheetPickRecipe(day, slot = 'dinner', note = '') {
+  function sheetPickRecipe(day, slot = 'dinner', note = '', people = 0) {
     const d = new Date(day + 'T00:00');
     const fits = r => (slot === 'breakfast' ? r.category === 'breakfast' : slot === 'lunch' ? r.category === 'lunch' : r.category === 'dinner') ? 0 : 1;
     const rows = q => forMe(RECIPES, true).filter(r => !q || r.haystack.includes(q.toLowerCase()))
       .sort((a, b) => fits(a) - fits(b) || match(a).missing.length - match(b).missing.length)
       .map(r => { const m = match(r); return `<button type="button" class="pick" data-action="plan-add" data-day="${day}" data-slot="${slot}" data-id="${r.id}"><img src="${esc(r.image)}" alt="" loading="lazy"><span><span class="t">${esc(r.title)}</span><span class="sub">${fmtMins(r.total)} · ${CAT_LABEL[r.category]}</span></span>${ring(m)}</button>`; }).join('') || '<p class="muted" style="padding:12px">No matches.</p>';
     openSheet(`Add ${slot} for ${esc(fmtDay(d, { weekday: 'long', month: 'short', day: 'numeric' }))}`,
-      `<label class="field" for="sheetQ"><span class="sr-only">Search recipes</span>${icon('search')}<input class="input" id="sheetQ" type="search" placeholder="Search recipes" autocomplete="off"></label><label class="lbl" for="planNote" style="margin-top:10px">Note <span class="muted" style="font-weight:400">(optional)</span></label><input class="input plain" id="planNote" maxlength="300" autocomplete="off" placeholder="e.g. double it for guests, use leftover rice" value="${esc(note || '')}">`,
+      `<label class="field" for="sheetQ"><span class="sr-only">Search recipes</span>${icon('search')}<input class="input" id="sheetQ" type="search" placeholder="Search recipes" autocomplete="off"></label>${peopleStepper(people || (+state.prefs.household > 0 ? +state.prefs.household : 4))}<label class="lbl" for="planNote" style="margin-top:10px">Note <span class="muted" style="font-weight:400">(optional)</span></label><input class="input plain" id="planNote" maxlength="300" autocomplete="off" placeholder="e.g. double it for guests, use leftover rice" value="${esc(note || '')}">`,
       rows(''), () => { const i = $('#sheetQ'); i.addEventListener('input', () => { $('#sheetBody').innerHTML = rows(i.value.trim()); }); setTimeout(() => i.focus(), 30); });
   }
   let pickSlot = 'dinner';
-  function sheetPickDay(id, slot, note = '') {
+  function sheetPickDay(id, slot, note = '', people = 0) {
     const r = byId.get(id), t = iso(today());
     pickSlot = slot || slotFor(id);
     const days = [...weekDays(0), ...weekDays(1)].filter(d => iso(d) >= t);
-    openSheet(`Plan ${esc(r.title)}`, `<div class="chips" role="radiogroup" aria-label="Which meal">${SLOTS.map(([k, l]) => `<button type="button" class="chip" role="radio" data-action="pick-slot" data-id="${id}" data-v="${k}" aria-checked="${pickSlot === k}" aria-pressed="${pickSlot === k}">${l}</button>`).join('')}</div><label class="lbl" for="planNote" style="margin-top:10px">Note <span class="muted" style="font-weight:400">(optional)</span></label><input class="input plain" id="planNote" maxlength="300" autocomplete="off" placeholder="e.g. double it for guests, use leftover rice" value="${esc(note || '')}"><p class="note" style="margin-top:8px">Choose a day. You can change it later from the Plan tab.</p>`,
+    openSheet(`Plan ${esc(r.title)}`, `<div class="chips" role="radiogroup" aria-label="Which meal">${SLOTS.map(([k, l]) => `<button type="button" class="chip" role="radio" data-action="pick-slot" data-id="${id}" data-v="${k}" aria-checked="${pickSlot === k}" aria-pressed="${pickSlot === k}">${l}</button>`).join('')}</div>${peopleStepper(people || servingsOf(r))}<label class="lbl" for="planNote" style="margin-top:10px">Note <span class="muted" style="font-weight:400">(optional)</span></label><input class="input plain" id="planNote" maxlength="300" autocomplete="off" placeholder="e.g. double it for guests, use leftover rice" value="${esc(note || '')}"><p class="note" style="margin-top:8px">Choose a day. You can change it later from the Plan tab.</p>`,
       `<div class="daypick">${days.map(d => { const k = iso(d), n = (state.plan[k]?.[pickSlot] || []).length; return `<button type="button" data-action="plan-add" data-day="${k}" data-slot="${pickSlot}" data-id="${id}"><span class="dow">${k === t ? 'Today' : esc(fmtDay(d, { weekday: 'short' }))}</span><span class="d">${esc(fmtDay(d, { month: 'short', day: 'numeric' }))}</span><span class="n">${n ? n + ' planned' : 'Free'}</span></button>`; }).join('')}</div>`);
   }
 
@@ -918,6 +941,7 @@
         const m = merged[day] || (merged[day] = { breakfast: [], lunch: [], dinner: [] });
         SLOTS.forEach(([k]) => (slots[k] || []).forEach(id => { if (!m[k].includes(id)) m[k].push(id); }));
         if (slots.notes) m.notes = { ...(m.notes || {}), ...slots.notes };
+        if (slots.people) m.people = { ...(m.people || {}), ...slots.people };
       });
       state.plan = merged;
     }
@@ -2618,7 +2642,8 @@
     e.preventDefault();
     const f = e.target;
     setPlanNote(f.dataset.day, f.dataset.slot, f.dataset.id, $('#planNoteText').value);
-    save.plan(); closeSheet(); refresh(); toast('Note saved');
+    setPlanPeople(f.dataset.day, f.dataset.slot, f.dataset.id, readPeople());
+    save.plan(); closeSheet(); refresh(); toast('Saved');
   });
   document.addEventListener('submit', async e => {
     if (e.target.id !== 'proGiftForm') return;
@@ -2749,13 +2774,20 @@
       }
       case 'plan-recipe': sheetPickDay(id); break;
       case 'plan-day': sheetPickRecipe(el.dataset.day, el.dataset.slot); break;
-      case 'pick-slot': sheetPickDay(id, el.dataset.v, $('#planNote')?.value || ''); break;
+      case 'pick-slot': sheetPickDay(id, el.dataset.v, $('#planNote')?.value || '', readPeople()); break;
+      case 'ppl-step': {
+        const o = $('#planPeople'); if (!o) break;
+        const n = clampPeople(+o.dataset.n + +el.dataset.d);
+        o.dataset.n = n; o.textContent = peopleLabel(n);
+        break;
+      }
       case 'plan-add': {
         const day = el.dataset.day, slot = el.dataset.slot || slotFor(id);
         const d = state.plan[day] || (state.plan[day] = { breakfast: [], lunch: [], dinner: [] });
         d[slot].push(id);
         const note = $('#planNote')?.value.trim();
         if (note) setPlanNote(day, slot, id, note);
+        if (readPeople()) setPlanPeople(day, slot, id, readPeople());
         save.plan(); closeSheet();
         toast(`Planned ${esc(r.title)} for ${esc(fmtDay(new Date(day + 'T00:00'), { weekday: 'long' }))} ${slot}`, currentView !== 'plan' ? { label: 'View plan', run: () => { location.hash = 'plan'; } } : null);
         if (currentView === 'plan') refresh();
@@ -2763,18 +2795,19 @@
       }
       case 'unplan': {
         const day = el.dataset.day, arr = state.plan[day]?.[el.dataset.slot];
-        if (arr) { const [gone] = arr.splice(+el.dataset.i, 1); if (gone && !arr.includes(gone)) setPlanNote(day, el.dataset.slot, gone, ''); }
+        if (arr) { const [gone] = arr.splice(+el.dataset.i, 1); if (gone && !arr.includes(gone)) { setPlanNote(day, el.dataset.slot, gone, ''); setPlanPeople(day, el.dataset.slot, gone, 0); } }
         if (!dayIds(day).length) delete state.plan[day];
         save.plan(); refresh(); break;
       }
       case 'plan-note': {
         const { day, slot } = el.dataset, rid = el.dataset.id, rr = byId.get(rid); if (!rr) break;
         const cur = state.plan[day]?.notes?.[noteKey(slot, rid)] || '';
-        openSheet(`Note for ${esc(rr.title)}`, `<p class="note">${esc(fmtDay(new Date(day + 'T00:00'), { weekday: 'long', month: 'short', day: 'numeric' }))} · ${esc(slot)}</p>`,
+        openSheet(esc(rr.title), `<p class="note">${esc(fmtDay(new Date(day + 'T00:00'), { weekday: 'long', month: 'short', day: 'numeric' }))} · ${esc(slot)}</p>`,
           `<form class="form" id="planNoteForm" data-day="${esc(day)}" data-slot="${esc(slot)}" data-id="${esc(rid)}">
+            ${peopleStepper(planPeople(day, slot, rr))}
             <label class="lbl" for="planNoteText">Note</label>
             <textarea class="input plain" id="planNoteText" maxlength="300" rows="3" placeholder="e.g. double it for guests, use leftover rice">${esc(cur)}</textarea>
-            <div class="actions"><button class="btn primary" type="submit">Save note</button>${cur ? '<button class="btn" type="button" data-action="plan-note-clear">Remove note</button>' : ''}</div>
+            <div class="actions"><button class="btn primary" type="submit">Save</button>${cur ? '<button class="btn" type="button" data-action="plan-note-clear">Remove note</button>' : ''}</div>
           </form>`, () => setTimeout(() => $('#planNoteText')?.focus(), 30));
         break;
       }
@@ -2786,13 +2819,16 @@
       case 'week': state.week += +el.dataset.d; refresh(); break;
       case 'plan-to-list': {
         let added = 0, skipped = 0, already = 0;
-        const seen = new Set();
-        weekDays(state.week).forEach(d => dayIds(iso(d)).forEach(rid => {
-          const x = byId.get(rid); if (!x) return;
-          if (onList(x) && !seen.has(rid)) { already++; return; }
-          seen.add(rid);
-          const res = addRecipeToList(x, true); added += res.added; skipped += res.skipped;
-        }));
+        // Add up the people for every time a recipe is planned this week, then buy for all of them at once.
+        const total = new Map();
+        weekDays(state.week).forEach(d => { const k = iso(d); SLOTS.forEach(([slot]) => (state.plan[k]?.[slot] || []).forEach(rid => {
+          const x = byId.get(rid); if (x) total.set(rid, (total.get(rid) || 0) + planPeople(k, slot, x));
+        })); });
+        total.forEach((n, rid) => {
+          const x = byId.get(rid);
+          if (onList(x)) { already++; return; }
+          const res = addRecipeToList(x, true, n); added += res.added; skipped += res.skipped;
+        });
         renderNav(currentView);
         const parts = [`Added ${added} item${added === 1 ? '' : 's'}`];
         if (skipped) parts.push(`skipped ${skipped} in your pantry`);

@@ -10,3 +10,5 @@ __pycache__/
 marketing/*.zip
 marketing/reel-frames/
 marketing/reels/
+cron-secret.txt
+marketing/pin-src/

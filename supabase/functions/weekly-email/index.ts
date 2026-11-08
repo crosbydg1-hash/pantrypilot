@@ -11,7 +11,7 @@
 
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
-const SITE = (Deno.env.get("SITE_URL") ?? "https://staging.d1asr1kldrj6f9.amplifyapp.com").replace(/\/$/, "");
+const SITE = (Deno.env.get("SITE_URL") ?? "https://crosbydg1-hash.github.io/pantrypilot").replace(/\/$/, "");
 const FUNCTION_URL = `${Deno.env.get("SUPABASE_URL")}/functions/v1/weekly-email`;
 
 type Ingredient = { item: string };

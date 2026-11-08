@@ -46,10 +46,13 @@
       const { data } = await sb.from('profiles')
         .select('display_name, is_pro, pro_until, avatar, bio, referral_code, bonus_until, created_at, is_admin').eq('id', authUser.id).maybeSingle();
       const paid = !!data?.is_pro && (!data.pro_until || future(data.pro_until));
+      // Paying through Stripe, or Pro given by an admin? (If the check isn't set up yet, assume Stripe.)
+      let billing = false;
+      if (paid) { try { const r = await sb.rpc('my_billing'); billing = r.error ? true : !!r.data; } catch { billing = true; } }
       return {
         id: authUser.id, email: authUser.email,
         name: data?.display_name || authUser.user_metadata?.display_name || authUser.email.split('@')[0],
-        pro: paid || future(data?.bonus_until), paidPro: paid, bonusUntil: data?.bonus_until || null,
+        pro: paid || future(data?.bonus_until), paidPro: paid, hasBilling: billing, proUntil: data?.pro_until || null, bonusUntil: data?.bonus_until || null,
         avatar: data?.avatar || '', bio: data?.bio || '', refCode: data?.referral_code || '', since: data?.created_at || null, isAdmin: !!data?.is_admin
       };
     }

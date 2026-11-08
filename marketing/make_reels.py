@@ -88,6 +88,24 @@ reel2 = [
     ('r2-end', end_card('Plan the week. Shop once.'), 2.8, 'pop'),
 ]
 
+# ---------- Reel 3: three 15-minute dinners ----------
+def quick_card(n, photo, title, line):
+    return page(W, H, f'''<div style="{TOP}230px">
+      <span class="pill" style="font-size:34px;padding:14px 26px;background:var(--pap);color:#fff">Dinner {n} of 3</span>
+      <div class="card" style="margin-top:34px;border-radius:44px;overflow:hidden">
+        <img class="photo" src="{img(photo)}" style="width:100%;height:700px">
+        <div style="padding:34px 38px"><div class="serif" style="font-size:64px">{title}</div>
+        <div style="font-size:36px;color:var(--muted);font-weight:600;margin-top:10px">{line}</div></div>
+      </div></div>''')
+reel3 = [
+    ('r3-hook', hook('3 dinners<br>you can make in<br>15 minutes', 'save this for busy nights'), 2.4, 'pop'),
+    ('r3-c1', quick_card(1, 'q-quesadillas', 'Chicken Quesadillas', '15 min · tortillas, chicken, cheddar'), 2.0, 'zoom'),
+    ('r3-c2', quick_card(2, 'q-shrimp-tacos', 'Shrimp Tacos', '13 min · shrimp, cabbage, lime'), 2.0, 'zoom'),
+    ('r3-c3', quick_card(3, 'q-pesto-pasta', 'Pesto Pasta with Peas', '15 min · pasta, pesto, peas'), 2.0, 'zoom'),
+    ('r3-end', end_card('Find dinners you can make with what you have'), 2.8, 'pop'),
+]
+REELS_ALL = {'reel-nothing-to-eat': lambda: reel1, 'reel-plan-the-week': lambda: reel2, 'reel-15-minute-dinners': lambda: reel3}
+
 def build(name, scenes):
     timeline = {'width': W, 'height': H, 'fps': 30, 'fade': 0.22, 'scenes': []}
     for key, html, secs, effect in scenes:
@@ -98,5 +116,5 @@ def build(name, scenes):
     subprocess.run(['swift', str(HERE / 'render_video.swift'), str(tl), str(REELS / f'{name}.mp4')], check=True)
 
 if __name__ == '__main__':
-    build('reel-nothing-to-eat', reel1)
-    build('reel-plan-the-week', reel2)
+    for name in (sys.argv[1:] or REELS_ALL):   # e.g. python3 marketing/make_reels.py reel-15-minute-dinners
+        build(name, REELS_ALL[name]())

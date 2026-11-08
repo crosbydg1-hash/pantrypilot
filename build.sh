@@ -23,8 +23,17 @@ VERSION=$(date +%Y%m%d%H%M%S)
 sed "s/?v=dev/?v=$VERSION/g" index.html > "$STAGE/index.html"
 sed "s/const VERSION = 'dev';/const VERSION = '$VERSION';/" sw.js > "$STAGE/sw.js"
 cp privacy.html app.js backend.js config.js recipes.js nutrition.js manifest.webmanifest "$STAGE/"
+# Every photo also needs a card-size copy (img/sm) and a thumbnail (img/xs). Make any that are missing or out of date.
+mkdir -p img/sm img/xs
+for f in img/*.jpg; do
+  n=$(basename "$f")
+  [ "img/sm/$n" -nt "$f" ] || sips -s format jpeg -s formatOptions 50 -Z 560 "$f" --out "img/sm/$n" >/dev/null 2>&1
+  [ "img/xs/$n" -nt "$f" ] || sips -s format jpeg -s formatOptions 65 -Z 168 "$f" --out "img/xs/$n" >/dev/null 2>&1
+done
 cp -R img "$STAGE/img"
 cp -R icons "$STAGE/icons"
+# Pinterest pin images (made by marketing/make_pins.py) are published so Pinterest's bulk upload can fetch them.
+if [ -d marketing/pins ]; then mkdir -p "$STAGE/pins" && cp marketing/pins/*.png "$STAGE/pins/" 2>/dev/null || true; fi
 # ads.txt proves to Google that you own the site. Create it once AdSense gives you your line.
 if [ -f ads.txt ]; then cp ads.txt "$STAGE/"; fi
 

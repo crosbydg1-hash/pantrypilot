@@ -33,6 +33,13 @@ LINES = {
         (7, "And it skips what you already have."),
         (8, "PantryPilot. Plan the week, shop once. Link in bio!"),
     ],
+    'reel-15-minute-dinners': [
+        (0, "Three dinners you can make in fifteen minutes."),
+        (1, "One. Cheesy chicken quesadillas."),
+        (2, "Two. Shrimp tacos with a lime slaw."),
+        (3, "Three. Pesto pasta with peas."),
+        (4, "Find what you can make with what you have. PantryPilot, link in bio!"),
+    ],
 }
 
 def starts_of(tl):
@@ -134,7 +141,7 @@ def build(name):
     # Voice first: each line gets the scenes from its starting scene up to the next line's scene,
     # and those scenes are stretched if the line needs longer, so the words always match the picture.
     import make_reels
-    base = {'reel-nothing-to-eat': make_reels.reel1, 'reel-plan-the-week': make_reels.reel2}[name]
+    base = make_reels.REELS_ALL[name]()
     for sc, b in zip(tl['scenes'], base): sc['seconds'] = b[2]
     lines = LINES[name]
     voices = [speak(text, i, name) for i, (_, text) in enumerate(lines)]
@@ -180,4 +187,5 @@ def build(name):
         print('made', out.name, f'({total:.1f}s)')
 
 if __name__ == '__main__':
-    for n in LINES: build(n)
+    import sys
+    for n in (sys.argv[1:] or LINES): build(n)

@@ -7639,6 +7639,560 @@ window.PP_RECIPES = [
    "Strain, stir in the vanilla and chill at least 3 hours. Serve with a dusting of nutmeg."
   ],
   "image": "img/h-eggnog.jpg"
+ },
+ {
+  "id": "q-quesadillas",
+  "title": "Cheesy Chicken Quesadillas",
+  "description": "Crispy tortillas packed with chicken, melty cheddar and peppers. Dinner on the table in 15 minutes.",
+  "category": "dinner",
+  "cuisine": "mexican",
+  "emoji": "🧀",
+  "prep_time": 5,
+  "cook_time": 10,
+  "calories": 520,
+  "servings": 4,
+  "skill_level": "beginner",
+  "tags": [
+   "15 minutes",
+   "kid friendly",
+   "high protein"
+  ],
+  "ingredients": [
+   {
+    "item": "large flour tortillas",
+    "quantity": 4,
+    "unit": ""
+   },
+   {
+    "item": "cooked chicken, shredded",
+    "quantity": 2,
+    "unit": "cup"
+   },
+   {
+    "item": "sharp cheddar, grated",
+    "quantity": 2,
+    "unit": "cup"
+   },
+   {
+    "item": "bell pepper, diced",
+    "quantity": 1,
+    "unit": ""
+   },
+   {
+    "item": "ground cumin",
+    "quantity": 0.5,
+    "unit": "tsp"
+   },
+   {
+    "item": "salsa",
+    "quantity": 0.5,
+    "unit": "cup"
+   }
+  ],
+  "steps": [
+   "Toss the chicken with the cumin. Scatter cheese, chicken and pepper over half of each tortilla, then more cheese on top.",
+   "Fold the tortillas in half and press down.",
+   "Cook in a dry skillet over medium heat for 2 to 3 minutes a side, until golden and the cheese melts.",
+   "Cut into wedges and serve with salsa."
+  ],
+  "image": "img/q-quesadillas.jpg",
+  "photo_credit": {
+   "name": "Tomwsulcer",
+   "url": "https://commons.wikimedia.org/w/index.php?title=User:Tomwsulcer&action=edit&redlink=1",
+   "page": "https://commons.wikimedia.org/w/index.php?curid=41349883",
+   "license": "Public domain",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/deed.en/",
+   "source": "wikimedia"
+  }
+ },
+ {
+  "id": "q-garlic-noodles",
+  "title": "15-Minute Garlic Butter Noodles",
+  "description": "Buttery, garlicky noodles with a salty hit of soy and parmesan. Pantry staples, big comfort.",
+  "category": "dinner",
+  "cuisine": "asian",
+  "emoji": "🍜",
+  "prep_time": 5,
+  "cook_time": 10,
+  "calories": 520,
+  "servings": 4,
+  "skill_level": "beginner",
+  "tags": [
+   "15 minutes",
+   "kid friendly",
+   "vegetarian"
+  ],
+  "ingredients": [
+   {
+    "item": "spaghetti",
+    "quantity": 12,
+    "unit": "oz"
+   },
+   {
+    "item": "unsalted butter",
+    "quantity": 4,
+    "unit": "tbsp"
+   },
+   {
+    "item": "garlic cloves, minced",
+    "quantity": 6,
+    "unit": ""
+   },
+   {
+    "item": "soy sauce",
+    "quantity": 2,
+    "unit": "tbsp"
+   },
+   {
+    "item": "honey",
+    "quantity": 1,
+    "unit": "tsp"
+   },
+   {
+    "item": "parmesan",
+    "quantity": 0.333,
+    "unit": "cup"
+   },
+   {
+    "item": "scallions, sliced",
+    "quantity": 2,
+    "unit": ""
+   }
+  ],
+  "steps": [
+   "Cook the spaghetti in salted water. Save half a cup of the pasta water, then drain.",
+   "Melt the butter in the same pot over medium-low heat and cook the garlic for 1 minute, until fragrant.",
+   "Stir in the soy sauce and honey, add the noodles and a splash of pasta water, and toss until glossy.",
+   "Toss with parmesan and top with scallions."
+  ],
+  "image": "img/q-garlic-noodles.jpg",
+  "photo_credit": {
+   "name": "Crustacean Beverly Hills",
+   "url": "https://commons.wikimedia.org/w/index.php?curid=150409440",
+   "page": "https://commons.wikimedia.org/w/index.php?curid=150409440",
+   "license": "Public domain",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/deed.en/",
+   "source": "wikimedia"
+  }
+ },
+ {
+  "id": "q-fried-rice",
+  "title": "Egg Fried Rice",
+  "description": "The best use for leftover rice: scrambled egg, peas and soy, all in one hot pan.",
+  "category": "dinner",
+  "cuisine": "asian",
+  "emoji": "🍚",
+  "prep_time": 5,
+  "cook_time": 10,
+  "calories": 430,
+  "servings": 4,
+  "skill_level": "beginner",
+  "tags": [
+   "15 minutes",
+   "kid friendly",
+   "vegetarian",
+   "use it up"
+  ],
+  "ingredients": [
+   {
+    "item": "cooked rice, cold",
+    "quantity": 4,
+    "unit": "cup"
+   },
+   {
+    "item": "eggs",
+    "quantity": 3,
+    "unit": ""
+   },
+   {
+    "item": "frozen peas",
+    "quantity": 1,
+    "unit": "cup"
+   },
+   {
+    "item": "carrot, diced",
+    "quantity": 1,
+    "unit": ""
+   },
+   {
+    "item": "soy sauce",
+    "quantity": 3,
+    "unit": "tbsp"
+   },
+   {
+    "item": "sesame oil",
+    "quantity": 1,
+    "unit": "tsp"
+   },
+   {
+    "item": "neutral oil",
+    "quantity": 2,
+    "unit": "tbsp"
+   },
+   {
+    "item": "scallions, sliced",
+    "quantity": 3,
+    "unit": ""
+   }
+  ],
+  "steps": [
+   "Heat the oil in a large skillet over high heat. Cook the carrot and peas for 2 minutes.",
+   "Push the vegetables aside, crack in the eggs and scramble until just set.",
+   "Add the rice, breaking up clumps, and stir-fry for 3 to 4 minutes until hot and a little crisp.",
+   "Stir in the soy sauce and sesame oil, and finish with scallions."
+  ],
+  "image": "img/q-fried-rice.jpg",
+  "photo_credit": {
+   "name": "Adonis Chen from Keelung, Taiwan",
+   "url": "https://www.flickr.com/photos/hcc",
+   "page": "https://commons.wikimedia.org/w/index.php?curid=2695487",
+   "license": "CC BY 2.0",
+   "license_url": "https://creativecommons.org/licenses/by/2.0/",
+   "source": "wikimedia"
+  }
+ },
+ {
+  "id": "q-shrimp-tacos",
+  "title": "15-Minute Shrimp Tacos",
+  "description": "Smoky seared shrimp, crunchy slaw and a squeeze of lime in warm tortillas.",
+  "category": "dinner",
+  "cuisine": "mexican",
+  "emoji": "🌮",
+  "prep_time": 7,
+  "cook_time": 6,
+  "calories": 360,
+  "servings": 4,
+  "skill_level": "beginner",
+  "tags": [
+   "15 minutes",
+   "high protein"
+  ],
+  "ingredients": [
+   {
+    "item": "shrimp, peeled",
+    "quantity": 1,
+    "unit": "lb"
+   },
+   {
+    "item": "smoked paprika",
+    "quantity": 1,
+    "unit": "tsp"
+   },
+   {
+    "item": "ground cumin",
+    "quantity": 1,
+    "unit": "tsp"
+   },
+   {
+    "item": "garlic powder",
+    "quantity": 0.5,
+    "unit": "tsp"
+   },
+   {
+    "item": "olive oil",
+    "quantity": 1,
+    "unit": "tbsp"
+   },
+   {
+    "item": "corn tortillas",
+    "quantity": 8,
+    "unit": ""
+   },
+   {
+    "item": "cabbage, shredded",
+    "quantity": 2,
+    "unit": "cup"
+   },
+   {
+    "item": "greek yogurt",
+    "quantity": 0.333,
+    "unit": "cup"
+   },
+   {
+    "item": "lime",
+    "quantity": 2,
+    "unit": ""
+   }
+  ],
+  "steps": [
+   "Toss the shrimp with the paprika, cumin, garlic powder, a pinch of salt and the oil.",
+   "Stir the yogurt with the juice of one lime and a pinch of salt. Toss half of it with the cabbage.",
+   "Sear the shrimp in a hot skillet for 2 minutes a side, until pink.",
+   "Warm the tortillas, then fill with slaw and shrimp. Spoon over the rest of the sauce and serve with lime wedges."
+  ],
+  "image": "img/q-shrimp-tacos.jpg",
+  "photo_credit": {
+   "name": "Missvain",
+   "url": "https://commons.wikimedia.org/wiki/User:Missvain",
+   "page": "https://commons.wikimedia.org/w/index.php?curid=109741020",
+   "license": "CC BY 4.0",
+   "license_url": "https://creativecommons.org/licenses/by/4.0/",
+   "source": "wikimedia"
+  }
+ },
+ {
+  "id": "q-chicken-nuggets",
+  "title": "Crispy Baked Chicken Nuggets",
+  "description": "Golden, crunchy nuggets made from real chicken breast and baked, not fried. Dip them in anything.",
+  "category": "dinner",
+  "cuisine": "american",
+  "emoji": "🍗",
+  "prep_time": 10,
+  "cook_time": 15,
+  "calories": 280,
+  "servings": 4,
+  "skill_level": "beginner",
+  "tags": [
+   "kid friendly",
+   "high protein"
+  ],
+  "ingredients": [
+   {
+    "item": "chicken breasts",
+    "quantity": 1.5,
+    "unit": "lb"
+   },
+   {
+    "item": "panko breadcrumbs",
+    "quantity": 1.5,
+    "unit": "cup"
+   },
+   {
+    "item": "parmesan",
+    "quantity": 0.333,
+    "unit": "cup"
+   },
+   {
+    "item": "garlic powder",
+    "quantity": 1,
+    "unit": "tsp"
+   },
+   {
+    "item": "smoked paprika",
+    "quantity": 1,
+    "unit": "tsp"
+   },
+   {
+    "item": "eggs",
+    "quantity": 2,
+    "unit": ""
+   },
+   {
+    "item": "olive oil",
+    "quantity": 2,
+    "unit": "tbsp"
+   }
+  ],
+  "steps": [
+   "Heat the oven to 425°F and line a baking sheet. Cut the chicken into bite-size pieces and season with salt.",
+   "Toss the panko with the olive oil in a dry skillet over medium heat until golden, about 3 minutes. Mix with the parmesan, garlic powder and paprika.",
+   "Beat the eggs in a bowl. Dip each piece in egg, then press into the crumbs.",
+   "Bake for 12 to 15 minutes, until cooked through."
+  ],
+  "image": "img/q-chicken-nuggets.jpg",
+  "photo_credit": {
+   "name": "Klaus-Dieter Keller",
+   "url": "https://commons.wikimedia.org/wiki/User:Kdkeller",
+   "page": "https://commons.wikimedia.org/w/index.php?curid=107655572",
+   "license": "Public domain",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/deed.en/",
+   "source": "wikimedia"
+  }
+ },
+ {
+  "id": "q-stovetop-mac",
+  "title": "One-Pot Stovetop Mac and Cheese",
+  "description": "Creamy, cheesy and faster than the boxed kind. The pasta cooks right in the milk.",
+  "category": "dinner",
+  "cuisine": "american",
+  "emoji": "🧀",
+  "prep_time": 2,
+  "cook_time": 13,
+  "calories": 540,
+  "servings": 4,
+  "skill_level": "beginner",
+  "tags": [
+   "15 minutes",
+   "kid friendly",
+   "vegetarian",
+   "one pot"
+  ],
+  "ingredients": [
+   {
+    "item": "small pasta",
+    "quantity": 8,
+    "unit": "oz"
+   },
+   {
+    "item": "whole milk",
+    "quantity": 2,
+    "unit": "cup"
+   },
+   {
+    "item": "unsalted butter",
+    "quantity": 2,
+    "unit": "tbsp"
+   },
+   {
+    "item": "sharp cheddar, grated",
+    "quantity": 2,
+    "unit": "cup"
+   },
+   {
+    "item": "dijon mustard",
+    "quantity": 1,
+    "unit": "tsp"
+   },
+   {
+    "item": "garlic powder",
+    "quantity": 0.25,
+    "unit": "tsp"
+   }
+  ],
+  "steps": [
+   "Bring the milk, 1 cup of water, the butter and a big pinch of salt to a simmer in a pot.",
+   "Add the pasta and cook, stirring often, for 9 to 11 minutes until tender and most of the liquid is absorbed.",
+   "Take the pot off the heat and stir in the cheddar, mustard and garlic powder until creamy. Add a splash of milk if it's thick."
+  ],
+  "image": "img/q-stovetop-mac.jpg",
+  "photo_credit": {
+   "name": "Ruth Hartnup from Vancouver, Canada",
+   "url": "https://www.flickr.com/people/95142644@N00",
+   "page": "https://commons.wikimedia.org/w/index.php?curid=75427550",
+   "license": "CC BY 2.0",
+   "license_url": "https://creativecommons.org/licenses/by/2.0/",
+   "source": "wikimedia"
+  }
+ },
+ {
+  "id": "q-pesto-pasta",
+  "title": "Pesto Pasta with Peas",
+  "description": "Bright green, fresh and ready before the table is set. Jarred pesto makes it a 15-minute dinner.",
+  "category": "dinner",
+  "cuisine": "italian",
+  "emoji": "🌿",
+  "prep_time": 3,
+  "cook_time": 12,
+  "calories": 520,
+  "servings": 4,
+  "skill_level": "beginner",
+  "tags": [
+   "15 minutes",
+   "kid friendly",
+   "vegetarian"
+  ],
+  "ingredients": [
+   {
+    "item": "small pasta",
+    "quantity": 12,
+    "unit": "oz"
+   },
+   {
+    "item": "pesto",
+    "quantity": 0.5,
+    "unit": "cup"
+   },
+   {
+    "item": "frozen peas",
+    "quantity": 1.5,
+    "unit": "cup"
+   },
+   {
+    "item": "parmesan",
+    "quantity": 0.333,
+    "unit": "cup"
+   },
+   {
+    "item": "lemon",
+    "quantity": 1,
+    "unit": ""
+   }
+  ],
+  "steps": [
+   "Cook the pasta in salted water. Add the peas for the last 2 minutes.",
+   "Save half a cup of the pasta water, then drain.",
+   "Toss with the pesto, parmesan, a squeeze of lemon and enough pasta water to make it silky."
+  ],
+  "image": "img/q-pesto-pasta.jpg",
+  "photo_credit": {
+   "name": "Unknown",
+   "url": "https://www.rawpixel.com/image/5969580/pesto-pasta",
+   "page": "https://www.rawpixel.com/image/5969580/pesto-pasta",
+   "license": "Public domain",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "rawpixel"
+  }
+ },
+ {
+  "id": "q-breakfast-burritos",
+  "title": "Cheesy Breakfast Burritos",
+  "description": "Soft scrambled eggs, cheddar and salsa wrapped up warm. Make extra and freeze them for busy mornings.",
+  "category": "breakfast",
+  "cuisine": "mexican",
+  "emoji": "🌯",
+  "prep_time": 5,
+  "cook_time": 10,
+  "calories": 430,
+  "servings": 4,
+  "skill_level": "beginner",
+  "tags": [
+   "15 minutes",
+   "kid friendly",
+   "vegetarian",
+   "freezer friendly"
+  ],
+  "ingredients": [
+   {
+    "item": "eggs",
+    "quantity": 8,
+    "unit": ""
+   },
+   {
+    "item": "whole milk",
+    "quantity": 2,
+    "unit": "tbsp"
+   },
+   {
+    "item": "unsalted butter",
+    "quantity": 1,
+    "unit": "tbsp"
+   },
+   {
+    "item": "large flour tortillas",
+    "quantity": 4,
+    "unit": ""
+   },
+   {
+    "item": "sharp cheddar, grated",
+    "quantity": 1,
+    "unit": "cup"
+   },
+   {
+    "item": "black beans, drained",
+    "quantity": 1,
+    "unit": "cup"
+   },
+   {
+    "item": "salsa",
+    "quantity": 0.5,
+    "unit": "cup"
+   }
+  ],
+  "steps": [
+   "Whisk the eggs with the milk and a pinch of salt.",
+   "Melt the butter in a skillet over medium-low heat and stir the eggs slowly until just set.",
+   "Warm the beans and tortillas. Fill each tortilla with eggs, beans, cheese and salsa.",
+   "Fold in the sides and roll up. Toast seam-side down in the skillet for a minute to seal."
+  ],
+  "image": "img/q-breakfast-burritos.jpg",
+  "photo_credit": {
+   "name": "jeffreyw",
+   "url": "https://www.flickr.com/people/7927684@N03",
+   "page": "https://commons.wikimedia.org/w/index.php?curid=23107578",
+   "license": "CC BY 2.0",
+   "license_url": "https://creativecommons.org/licenses/by/2.0/",
+   "source": "wikimedia"
+  }
  }
 ];
 /* Birthday gift recipes: unlocked on your birthday. */

@@ -373,6 +373,7 @@
         <span class="eyebrow">${esc(fmtDay(new Date(), { weekday: 'long', month: 'long', day: 'numeric' }))}</span>
         <h1>${greeting()} What are we cooking?</h1>
         <p class="lede">${ready || close ? `You can make <strong>${ready}</strong> ${ready === 1 ? 'recipe' : 'recipes'} right now${close ? `, and <strong>${close}</strong> more ${close === 1 ? 'is' : 'are'} one or two ingredients away` : ''}.` : `${mine.length} recipes to pick from. <a href="#pantry">Add what's in your pantry</a> to see which ones you can make tonight.`}${state.starter ? ' <a href="#pantry">These numbers use an example pantry. Set up yours.</a>' : ''}</p>
+        <div class="head-acts"><button type="button" class="btn small" data-action="surprise">${icon('sparkle')} Surprise me</button></div>
       </header>
 
       <a class="feature" href="#recipe-${p.id}">
@@ -575,6 +576,7 @@
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
             <label class="field" for="pq" style="flex:1;min-width:200px"><span class="sr-only">Filter ingredients</span>${icon('search')}<input class="input" id="pq" type="search" placeholder="Filter ingredients" autocomplete="off" value="${esc(state.pantryQuery)}"></label>
             <span class="note num" id="pantryCount"></span>
+            <button type="button" class="btn small" data-action="barcode">${icon('search')} Scan a barcode</button>
             <button type="button" class="btn ghost small danger" data-action="pantry-clear">Clear all</button>
           </div>
           <div id="aisles"></div>
@@ -807,6 +809,95 @@
     setTimeout(() => el.remove(), action ? 5000 : 2800);
   }
 
+  /* ---------- Barcode scanning: point the camera at a package, PantryPilot finds the ingredient ----------
+   * Uses the phone's built-in barcode reader when it has one (Android Chrome), otherwise loads a small
+   * scanner library only when needed (iPhone). Product names come from Open Food Facts, a free food database. */
+  const bc = { stream: null, timer: null, controls: null, busy: false };
+  function stopScan() {
+    clearInterval(bc.timer); bc.timer = null;
+    try { bc.controls?.stop(); } catch { } bc.controls = null;
+    bc.stream?.getTracks().forEach(t => t.stop()); bc.stream = null;
+    bc.busy = false;
+  }
+  sheet.addEventListener('close', stopScan);
+  document.addEventListener('submit', e => {   // typing the barcode numbers instead
+    if (e.target.id !== 'scanForm') return;
+    e.preventDefault(); bc.busy = true; lookupBarcode($('#scanCode').value);
+  });
+  const loadScript = src => new Promise((ok, bad) => { const el = document.createElement('script'); el.src = src; el.onload = ok; el.onerror = bad; document.head.appendChild(el); });
+  function openBarcode() {
+    openSheet('Scan a barcode', '', `<div class="scan-box"><video id="scanVideo" playsinline muted></video><span class="scan-frame" aria-hidden="true"></span></div>
+      <p class="note" id="scanMsg" role="status">Starting the camera…</p>
+      <form id="scanForm" class="scan-type"><label class="lbl" for="scanCode">Or type the numbers under the barcode</label>
+        <div class="row"><input class="input plain" id="scanCode" inputmode="numeric" pattern="[0-9]{6,14}" maxlength="14" autocomplete="off" placeholder="e.g. 0012000161155"><button class="btn" type="submit">Look up</button></div></form>
+      <div id="scanResult"></div>`, startScan);
+  }
+  async function startScan() {
+    const video = $('#scanVideo'), msg = $('#scanMsg');
+    const found = code => { if (bc.busy) return; bc.busy = true; navigator.vibrate?.(60); lookupBarcode(code); };
+    try {
+      bc.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1280 } }, audio: false });
+      video.srcObject = bc.stream; await video.play();
+      msg.textContent = 'Hold the barcode inside the box.';
+      if ('BarcodeDetector' in window) {
+        const det = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e'] });
+        bc.timer = setInterval(async () => { try { const c = await det.detect(video); if (c[0]) found(c[0].rawValue); } catch { } }, 300);
+      } else {
+        await loadScript('https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.5/umd/zxing-browser.min.js');
+        if (!sheet.open) return stopScan();
+        const reader = new ZXingBrowser.BrowserMultiFormatReader();
+        bc.stream.getTracks().forEach(t => t.stop()); bc.stream = null;   // the library opens its own camera feed
+        bc.controls = await reader.decodeFromConstraints({ video: { facingMode: 'environment' } }, video, res => { if (res) found(res.getText()); });
+      }
+    } catch (err) {
+      msg.textContent = err && err.name === 'NotAllowedError' ? 'Camera access is off. You can type the barcode numbers below instead.' : "The camera isn't available here. Type the barcode numbers below instead.";
+      $('.scan-box')?.remove();
+    }
+  }
+  // Which of our ingredients is this product? Words in its name count more than its categories.
+  function guessIngredients(prod) {
+    const name = ` ${[prod.product_name, prod.generic_name].filter(Boolean).join(' ')} `.toLowerCase();
+    const cats = ` ${(prod.categories_tags_en || []).join(' ')} `.toLowerCase().replace(/-/g, ' ');
+    const has = (text, k) => new RegExp(`\\b${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(e?s)?\\b`).test(text);
+    return INGREDIENTS.map(k => ({ k, score: (has(name, k) ? 3 : 0) + (has(cats, k) ? 1 : 0) + k.length / 100 }))
+      .filter(x => x.score >= 1).sort((a, b) => b.score - a.score).slice(0, 5).map(x => x.k);
+  }
+  async function lookupBarcode(code) {
+    code = String(code).replace(/\D/g, '');
+    const out = $('#scanResult'); if (!out) return;
+    if (code.length < 6) { out.innerHTML = '<p class="note">That doesn’t look like a barcode.</p>'; bc.busy = false; return; }
+    out.innerHTML = `<p class="note"><span class="spin" aria-hidden="true"></span> Looking up ${esc(code)}…</p>`;
+    let prod = null;
+    try {
+      const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,generic_name,categories_tags_en,brands`);
+      const data = await res.json(); if (data.status === 1) prod = data.product;
+    } catch { }
+    const picks = prod ? guessIngredients(prod) : [];
+    const nm = prod?.product_name || prod?.generic_name || '', brand = (prod?.brands || '').split(',')[0].trim();
+    const title = prod ? esc(brand && !nm.toLowerCase().includes(brand.toLowerCase()) ? `${brand} · ${nm}` : nm) : '';
+    out.innerHTML = `<div class="scan-found">
+      ${prod ? `<p><b>${title || 'Found it'}</b></p>` : `<p><b>We couldn’t find that product.</b> Pick the ingredient yourself:</p>`}
+      ${picks.length ? `<p class="note">Add to your pantry:</p><div class="chips">${picks.map(k => `<button type="button" class="chip ingr" data-action="scan-add" data-key="${esc(k)}" aria-pressed="${state.pantry.has(k)}">${esc(k)}</button>`).join('')}</div>` : prod ? '<p class="note">That isn’t an ingredient our recipes use. Pick one below if it’s close:</p>' : ''}
+      <label class="field" for="scanQ" style="margin-top:10px">${icon('search')}<input class="input" id="scanQ" type="search" placeholder="Search ingredients" autocomplete="off"></label>
+      <div class="chips" id="scanQList"></div>
+      <button type="button" class="btn small" data-action="scan-again" style="margin-top:10px">Scan another</button></div>`;
+    const q = $('#scanQ');
+    q.addEventListener('input', () => { const v = q.value.trim().toLowerCase(); $('#scanQList').innerHTML = v ? INGREDIENTS.filter(k => k.includes(v)).slice(0, 12).map(k => `<button type="button" class="chip ingr" data-action="scan-add" data-key="${esc(k)}" aria-pressed="${state.pantry.has(k)}">${esc(k)}</button>`).join('') : ''; });
+  }
+
+  /* ---------- Surprise me: a random recipe, picked from the ones you can make ---------- */
+  let lastSurprise = null;
+  function surprise() {
+    const pool = forMe(RECIPES, true).filter(r => r.id !== lastSurprise);
+    const ready = pool.filter(r => !match(r).missing.length), close = pool.filter(r => match(r).missing.length && match(r).missing.length <= 2);
+    const from = ready.length ? ready : close.length ? close : pool;
+    const r = from[Math.floor(Math.random() * from.length)]; if (!r) return;
+    lastSurprise = r.id;
+    location.hash = '#recipe-' + r.id;
+    const n = match(r).missing.length;
+    toast(n ? `Surprise! You need ${n} more ${n === 1 ? 'thing' : 'things'} for this one.` : 'Surprise! You have everything for this one.');
+  }
+
   /* ---------- timers ---------- */
   const timers = [];
   let actx = null, tickH = null;
@@ -825,13 +916,36 @@
     } catch { /* no audio available */ }
     try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch { }
   }
+  // Timers are saved, so they survive the app being closed or the phone reloading the page.
+  const saveTimers = () => store.set('timers', timers.filter(t => !t.done).map(({ id, label, total, end }) => ({ id, label, total, end })));
+  let timerLock = null;
+  function holdScreen(on) {   // keep the screen awake while a timer runs, so it can ring
+    try {
+      if (on && !timerLock && navigator.wakeLock) navigator.wakeLock.request('screen').then(l => { timerLock = l; l.addEventListener('release', () => { timerLock = null; }); }).catch(() => { });
+      if (!on && timerLock) { timerLock.release(); timerLock = null; }
+    } catch { }
+  }
+  function notifyDone(t) {
+    if (!document.hidden || !('Notification' in window) || Notification.permission !== 'granted') return;
+    const opts = { body: `${t.label} is done.`, icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: 'timer-' + t.id, vibrate: [200, 100, 200, 100, 200], requireInteraction: true };
+    try { navigator.serviceWorker?.ready.then(r => r.showNotification("Time's up", opts)).catch(() => new Notification("Time's up", opts)); }
+    catch { try { new Notification("Time's up", opts); } catch { } }
+  }
   function startTimer(sec, label) {
     try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); actx.resume && actx.resume(); } catch { }
     timers.push({ id: Math.random().toString(36).slice(2), label, total: sec, end: Date.now() + sec * 1000, done: false });
-    renderTimers();
+    saveTimers(); renderTimers(); holdScreen(true);
     if (!tickH) tickH = setInterval(tick, 500);
     toast(`Timer started · ${clock(sec)}`);
+    // Ask once, so a finished timer can alert you even when you've switched apps.
+    try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => { }); } catch { }
   }
+  (function restoreTimers() {
+    const saved = store.get('timers', []);
+    if (!Array.isArray(saved) || !saved.length) return;
+    saved.filter(t => t && t.end > Date.now() - 10 * 60000).forEach(t => timers.push({ ...t, done: false }));
+    if (timers.length) { setTimeout(renderTimers, 0); tickH = setInterval(tick, 500); }
+  })();
   function renderTimers() {
     $('#timers').innerHTML = timers.map(t => `<div class="timer ${t.done ? 'ringing' : ''}" data-t="${t.id}">
       <span class="lbl">${esc(t.label)}</span>
@@ -846,11 +960,11 @@
     let changed = false;
     timers.forEach(t => {
       const left = (t.end - Date.now()) / 1000;
-      if (!t.done && left <= 0) { t.done = true; changed = true; chime(); toast(`Time's up: ${esc(t.label)}`); }
+      if (!t.done && left <= 0) { t.done = true; changed = true; chime(); notifyDone(t); toast(`Time's up: ${esc(t.label)}`); }
       const el = $(`[data-t="${t.id}"].timer`);
       if (el && !t.done) { el.querySelector('[data-clock]').textContent = clock(left); el.querySelector('[data-bar]').style.width = Math.min(100, (1 - left / t.total) * 100) + '%'; }
     });
-    if (changed) renderTimers();
+    if (changed) { renderTimers(); saveTimers(); if (!timers.some(t => !t.done)) holdScreen(false); }
     if (timers.some(t => t.done) && Date.now() % 4000 < 500) chime();
   }
 
@@ -1033,7 +1147,7 @@
       <div class="acct-head">${avatar(u.name, 'lg', u.avatar)}<div style="min-width:0"><b>${esc(u.name)}</b><span class="muted">${esc(u.email)}</span></div></div>
       <p class="note">${status}</p>
       <div class="pro-row">${u.pro
-        ? `<span><span class="pro-tag">Pro</span> ${!u.paidPro && u.bonusUntil ? `Free from invites until ${esc(new Date(u.bonusUntil).toLocaleDateString(undefined, { month: 'long', day: 'numeric' }))}.` : 'No ads, and recipe import from links and photos.'}</span>${B.mode === 'demo' ? '<button type="button" class="linkish" data-action="pro-off">Turn off Pro (demo)</button>' : u.paidPro ? '<button type="button" class="btn small" data-action="manage-sub">Manage subscription</button>' : '<button type="button" class="btn small" data-action="paywall">Keep Pro</button>'}`
+        ? `<span><span class="pro-tag">Pro</span> ${u.paidPro && !u.hasBilling && B.mode !== 'demo' ? `A gift from PantryPilot${u.proUntil ? ` until ${esc(new Date(u.proUntil).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' }))}` : ', no end date'}. Enjoy!` : !u.paidPro && u.bonusUntil ? `Free from invites until ${esc(new Date(u.bonusUntil).toLocaleDateString(undefined, { month: 'long', day: 'numeric' }))}.` : 'No ads, and recipe import from links and photos.'}</span>${B.mode === 'demo' ? '<button type="button" class="linkish" data-action="pro-off">Turn off Pro (demo)</button>' : u.paidPro && u.hasBilling ? '<button type="button" class="btn small" data-action="manage-sub">Manage subscription</button>' : u.paidPro ? '' : '<button type="button" class="btn small" data-action="paywall">Keep Pro</button>'}`
         : `<span>Remove ads and import recipes from links and photos.</span><button type="button" class="btn small primary" data-action="paywall">Get Pro</button>`}</div>
       ${profileFormHTML(u)}
       ${inviteCardHTML(u)}
@@ -2839,8 +2953,18 @@
         break;
       }
       case 'timer': e.stopPropagation(); startTimer(+el.dataset.sec, el.dataset.label); break;
-      case 'timer-add': { const t = timers.find(x => x.id === el.dataset.t); if (t) { t.end += 60000; t.total += 60; } break; }
-      case 'timer-x': { const i = timers.findIndex(x => x.id === el.dataset.t); if (i > -1) timers.splice(i, 1); renderTimers(); break; }
+      case 'surprise': surprise(); break;
+      case 'barcode': openBarcode(); break;
+      case 'scan-again': $('#scanResult').innerHTML = ''; bc.busy = false; break;
+      case 'scan-add': {
+        const k = el.dataset.key, on = togglePantry(k, el.getAttribute('aria-pressed') !== 'true');
+        $$(`[data-action="scan-add"][data-key="${CSS.escape(k)}"]`).forEach(b => b.setAttribute('aria-pressed', on));
+        toast(on ? `Added ${esc(k)} to your pantry` : `Removed ${esc(k)}`);
+        if (currentView === 'pantry') { renderAisles(); }
+        break;
+      }
+      case 'timer-add': { const t = timers.find(x => x.id === el.dataset.t); if (t) { t.end += 60000; t.total += 60; saveTimers(); } break; }
+      case 'timer-x': { const i = timers.findIndex(x => x.id === el.dataset.t); if (i > -1) timers.splice(i, 1); saveTimers(); renderTimers(); if (!timers.some(t => !t.done)) holdScreen(false); break; }
       case 'add-list': {
         const only = el.dataset.onlyMissing === '1';
         const doAdd = () => { const res = addRecipeToList(r, only); renderNav(currentView); if (currentView === 'list') refresh(); return res; };
@@ -2987,6 +3111,7 @@
   });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && !cookEl.hidden && !cook.lock) requestWake();
+    if (document.visibilityState === 'visible' && timers.length) { tick(); if (timers.some(t => !t.done)) holdScreen(true); }   // catch up right away after unlocking
   });
 
   applyGifts();

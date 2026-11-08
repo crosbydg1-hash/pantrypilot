@@ -37,5 +37,13 @@ window.PP_NUTRITION = {
   "h-green-bean-casserole": [5, 20, 14], "h-cranberry-sauce": [0, 28, 0], "h-sweet-potato-casserole": [5, 40, 19], "h-pumpkin-pie": [5, 38, 17],
   "h-glazed-ham": [32, 26, 16], "h-brussels-sprouts": [6, 14, 9], "h-gingerbread-cookies": [2, 24, 4], "h-eggnog": [8, 22, 16],
 
-  "cake-vanilla": [6, 72, 26], "cake-confetti": [4, 58, 21], "cake-lemon": [5, 48, 17]
+  "cake-vanilla": [6, 72, 26], "cake-confetti": [4, 58, 21], "cake-lemon": [5, 48, 17],
+  "q-quesadillas": [32, 38, 24],
+  "q-garlic-noodles": [14, 70, 20],
+  "q-fried-rice": [14, 58, 16],
+  "q-shrimp-tacos": [26, 34, 14],
+  "q-chicken-nuggets": [30, 18, 10],
+  "q-stovetop-mac": [20, 62, 22],
+  "q-pesto-pasta": [16, 66, 22],
+  "q-breakfast-burritos": [22, 36, 22]
 };

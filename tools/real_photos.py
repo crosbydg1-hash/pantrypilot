@@ -45,14 +45,21 @@ def api(url, key=None):
     with urllib.request.urlopen(req, timeout=30) as res:
         return json.load(res)
 
-def download(url, dest):
-    req = urllib.request.Request(url, headers={'User-Agent': 'PantryPilot photo tool'})
-    with urllib.request.urlopen(req, timeout=60) as res:
-        dest.write_bytes(res.read())
+def download(url, dest, tries=4):
+    # Photo sites sometimes say "too many requests"; wait a little longer each time and try again.
+    for n in range(tries):
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': 'PantryPilot recipe app photo tool (https://crosbydg1-hash.github.io/pantrypilot)'})
+            with urllib.request.urlopen(req, timeout=60) as res:
+                dest.write_bytes(res.read()); return
+        except urllib.error.HTTPError as e:
+            if e.code != 429 or n == tries - 1: raise
+            time.sleep(15 * (n + 1))
 
 def search(key):
     _, spans = load()
-    targets = [r for _, _, d in spans for r in d if is_ai(r)]
+    only = set(filter(None, os.environ.get('PP_ONLY', '').split(',')))   # e.g. PP_ONLY=id1,id2 to search just those
+    targets = [r for _, _, d in spans for r in d if is_ai(r) and (not only or r['id'] in only)]
     REVIEW.mkdir(parents=True, exist_ok=True)
     found = {}
     def find(q):

@@ -110,7 +110,7 @@ for r in recipes:
 
 index = head('All recipes · PantryPilot', f"{len(pages)} home-cooking recipes from PantryPilot: breakfasts, dinners, sides, appetizers, desserts and drinks.", f"{site}/recipes/").replace('../../icons', '../icons') + f"""
 <div class="top"><a href="../#kitchen">← Open PantryPilot</a></div><h1>All recipes</h1><p>{len(pages)} recipes. Create a free PantryPilot account to see each one in full, scale servings, check your pantry and build a shopping list.</p>
-<div class="grid">{''.join(f'<a href="{s}/"><img src="../{esc(r["image"])}" alt="" loading="lazy"><span>{esc(r["title"])}</span></a>' for s, r, _ in pages if r.get('image'))}</div>
+<div class="grid">{''.join(f'<a href="{s}/"><img src="../{esc(r["image"]).replace('img/', 'img/sm/', 1)}" alt="" loading="lazy"><span>{esc(r["title"])}</span></a>' for s, r, _ in pages if r.get('image'))}</div>
 <footer><a href="../privacy.html">Privacy</a></footer></main></body></html>"""
 (out_dir / 'recipes').mkdir(parents=True, exist_ok=True)
 (out_dir / 'recipes' / 'index.html').write_text(index)

@@ -5,7 +5,7 @@
  * build-zip.sh replaces VERSION on every build so phones pick up updates. */
 const VERSION = 'dev';
 const CACHE = 'pantrypilot-' + VERSION;
-const SHELL = ['./', 'index.html', 'app.js?v=' + VERSION, 'backend.js?v=' + VERSION, 'recipes.js?v=' + VERSION, 'config.js?v=' + VERSION,
+const SHELL = ['./', 'index.html', 'app.js?v=' + VERSION, 'backend.js?v=' + VERSION, 'recipes.js?v=' + VERSION, 'nutrition.js?v=' + VERSION, 'config.js?v=' + VERSION,
   'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'privacy.html'];
 
 self.addEventListener('install', event => {

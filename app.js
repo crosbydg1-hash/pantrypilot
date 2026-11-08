@@ -16,6 +16,9 @@
   };
 
   /* ---------- light / dark mode: prefs.theme is 'auto' (match the phone), 'light' or 'dark' ---------- */
+  // Built-in photos come in three sizes: img/x.jpg (full), img/sm/x.jpg (cards) and img/xs/x.jpg (little thumbnails).
+  const sized = (src, size) => /^img\/[^/]+\.jpg$/.test(src || '') ? src.replace('img/', `img/${size}/`) : src;
+  const thumb = src => sized(src, 'sm'), tiny = src => sized(src, 'xs');
   const THEMES = [['auto', 'Auto', 'Matches your phone or computer'], ['light', 'Light', 'Bright and clean'], ['dark', 'Dark', 'Easy on the eyes at night']];
   const darkQuery = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : null;
   function applyTheme(t) {
@@ -302,7 +305,7 @@
   function card(r) {
     return `<article class="card">
       <a class="card-link" href="#recipe-${r.id}">
-        <div class="card-media"><img src="${esc(r.image)}" alt="" loading="lazy" decoding="async"><span class="cat">${CAT_LABEL[r.category] || esc(r.category)}</span></div>
+        <div class="card-media"><img src="${esc(thumb(r.image))}" alt="" loading="lazy" decoding="async"><span class="cat">${CAT_LABEL[r.category] || esc(r.category)}</span></div>
         <div class="card-body">
           <h3>${esc(r.title)}</h3>
           <div class="meta"><span>${icon('clock')}${fmtMins(r.total)}</span><span>${icon('flame')}${r.calories} kcal</span><span>${cap(r.skill_level)}</span>${starsMini(r.id)}</div>
@@ -369,7 +372,7 @@
       <header class="kitchen-head">
         <span class="eyebrow">${esc(fmtDay(new Date(), { weekday: 'long', month: 'long', day: 'numeric' }))}</span>
         <h1>${greeting()} What are we cooking?</h1>
-        <p class="lede">${mine.length} recipes in your kitchen. With what's in your pantry you can make <strong>${ready}</strong> of them right now, and <strong>${close}</strong> more are one or two ingredients away.${state.starter ? ' <a href="#pantry">These numbers use an example pantry. Set up yours.</a>' : ''}</p>
+        <p class="lede">${ready || close ? `You can make <strong>${ready}</strong> ${ready === 1 ? 'recipe' : 'recipes'} right now${close ? `, and <strong>${close}</strong> more ${close === 1 ? 'is' : 'are'} one or two ingredients away` : ''}.` : `${mine.length} recipes to pick from. <a href="#pantry">Add what's in your pantry</a> to see which ones you can make tonight.`}${state.starter ? ' <a href="#pantry">These numbers use an example pantry. Set up yours.</a>' : ''}</p>
       </header>
 
       <a class="feature" href="#recipe-${p.id}">
@@ -388,7 +391,7 @@
       </a>
 
       ${installCard()}
-      ${useItUpCard()}
+      ${useItUpCard(2)}
       ${pickedForYou(p)}
       ${collectionsRow()}
 
@@ -427,7 +430,8 @@
     const list = filtered();
     const f = state.f;
     const active = f.q || f.cat !== 'all' || f.skill !== 'all' || f.time || f.diets.length;
-    $('#resultsMeta').innerHTML = `<span><strong class="num">${list.length}</strong> ${list.length === 1 ? 'recipe' : 'recipes'}${active ? ` · <button type="button" class="btn ghost small" data-action="clear-filters">Clear filters</button>` : ''}${prefsNote()}</span>
+    const pn = prefsNote();
+    $('#resultsMeta').innerHTML = `<span class="rm-count"><span><strong class="num">${list.length}</strong> ${list.length === 1 ? 'recipe' : 'recipes'}</span>${active ? `<button type="button" class="linkish" data-action="clear-filters">Clear filters</button>` : ''}</span>${pn ? `<span class="rm-prefs">${pn}</span>` : ''}
       <label class="field" for="fSort"><span class="sr-only">Sort by</span>
         <select class="select" id="fSort" data-filter="sort">
           ${[['match', 'Best pantry match'], ['quick', 'Quickest first'], ['light', 'Lightest first'], ['az', 'A to Z']].map(([v, l]) => `<option value="${v}" ${f.sort === v ? 'selected' : ''}>${l}</option>`).join('')}
@@ -497,10 +501,10 @@
           <p class="lede">${esc(r.description)}</p>
           ${r.mine ? `<p class="src-line">${icon('sparkle')}<span>In your library${r.source_url ? ` · from <a href="${esc(r.source_url)}" target="_blank" rel="noopener noreferrer">${esc(hostOf(r.source_url))}</a>` : r.source_kind === 'photo' ? ' · from a photo' : ''}</span></p>` : ''}
           <dl class="strip">
-            <div><dt>Prep</dt><dd>${r.prep_time}m</dd></div>
-            <div><dt>Cook</dt><dd>${r.cook_time}m</dd></div>
+            <div><dt>Prep</dt><dd>${fmtMins(r.prep_time)}</dd></div>
+            <div><dt>Cook</dt><dd>${fmtMins(r.cook_time)}</dd></div>
             <div><dt>Total</dt><dd>${fmtMins(r.total)}</dd></div>
-            <div><dt>Per serving</dt><dd>${r.calories} kcal</dd></div>
+            <div><dt>Calories</dt><dd>${r.calories}</dd></div>
           </dl>
           ${nutritionLine(r)}
           <div class="tags">${starsLine(r.id)}${r.tags.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
@@ -592,7 +596,7 @@
   }
   function rrow(r, withAdd) {
     const m = match(r);
-    return `<div class="rrow"><img src="${esc(r.image)}" alt="" loading="lazy"><div style="min-width:0"><a href="#recipe-${r.id}">${esc(r.title)}</a>
+    return `<div class="rrow"><img src="${esc(tiny(r.image))}" alt="" loading="lazy"><div style="min-width:0"><a href="#recipe-${r.id}">${esc(r.title)}</a>
       <div class="sub">${fmtMins(r.total)} · ${m.missing.length ? `need <b>${esc(m.missing.join(', '))}</b>` : 'you have everything'}</div></div>
       ${withAdd ? `<button type="button" class="btn small" data-action="add-list" data-id="${r.id}" data-only-missing="1" aria-label="Add missing ingredients for ${esc(r.title)} to list">${icon('plus')} List</button>` : ''}</div>`;
   }
@@ -650,18 +654,20 @@
           return `<div class="day ${k === t ? 'today' : ''}">
             <div class="day-label"><span class="dow">${k === t ? 'Today' : esc(fmtDay(d, { weekday: 'short' }))}</span><span class="dom num">${d.getDate()}</span></div>
             <div class="day-slots">
-              ${SLOTS.map(([slot, label]) => {
+              ${SLOTS.filter(([slot]) => (state.plan[k]?.[slot] || []).some(id => byId.has(id))).map(([slot, label]) => {
                 const meals = (state.plan[k]?.[slot] || []).filter(id => byId.has(id));
                 return `<div class="slot">
                   <span class="slot-label">${label}</span>
                   <div class="day-meals">
-                    ${meals.map((id, i) => { const r = byId.get(id), note = state.plan[k]?.notes?.[noteKey(slot, id)]; return `<div class="meal"><img src="${esc(r.image)}" alt="" loading="lazy"><div><a href="#recipe-${r.id}">${esc(r.title)}</a><div class="sub">${fmtMins(r.total)} · ${peopleLabel(planPeople(k, slot, r))}</div>${note ? `<div class="meal-note">${esc(note)}</div>` : ''}</div>
+                    ${meals.map((id, i) => { const r = byId.get(id), note = state.plan[k]?.notes?.[noteKey(slot, id)]; return `<div class="meal"><img src="${esc(tiny(r.image))}" alt="" loading="lazy"><div><a href="#recipe-${r.id}">${esc(r.title)}</a><div class="sub">${fmtMins(r.total)} · ${peopleLabel(planPeople(k, slot, r))}</div>${note ? `<div class="meal-note">${esc(note)}</div>` : ''}</div>
                       <button type="button" class="x" data-action="plan-note" data-day="${k}" data-slot="${slot}" data-id="${esc(id)}" aria-label="People and note for ${esc(r.title)}" title="People and note">${icon('note')}</button>
                       <button type="button" class="x" data-action="unplan" data-day="${k}" data-slot="${slot}" data-i="${i}" aria-label="Remove ${esc(r.title)} from ${esc(fmtDay(d, { weekday: 'long' }))} ${label.toLowerCase()}">${icon('x')}</button></div>`; }).join('')}
-                    <button type="button" class="add-meal" data-action="plan-day" data-day="${k}" data-slot="${slot}" aria-label="Add ${label.toLowerCase()} for ${esc(fmtDay(d, { weekday: 'long' }))}">${icon('plus')} ${meals.length ? 'Add' : 'Add ' + label.toLowerCase()}</button>
+                    <button type="button" class="add-meal" data-action="plan-day" data-day="${k}" data-slot="${slot}" aria-label="Add another ${label.toLowerCase()} for ${esc(fmtDay(d, { weekday: 'long' }))}">${icon('plus')} Add</button>
                   </div>
                 </div>`;
               }).join('')}
+              ${(() => { const empty = SLOTS.filter(([slot]) => !(state.plan[k]?.[slot] || []).some(id => byId.has(id)));
+                return empty.length ? `<div class="add-row">${empty.map(([slot, label]) => `<button type="button" class="add-chip" data-action="plan-day" data-day="${k}" data-slot="${slot}" aria-label="Add ${label.toLowerCase()} for ${esc(fmtDay(d, { weekday: 'long' }))}">${icon('plus')} ${label}</button>`).join('')}</div>` : ''; })()}
             </div>
           </div>`;
         }).join('')}
@@ -775,7 +781,7 @@
     const fits = r => (slot === 'breakfast' ? r.category === 'breakfast' : slot === 'lunch' ? r.category === 'lunch' : r.category === 'dinner') ? 0 : 1;
     const rows = q => forMe(RECIPES, true).filter(r => !q || r.haystack.includes(q.toLowerCase()))
       .sort((a, b) => fits(a) - fits(b) || match(a).missing.length - match(b).missing.length)
-      .map(r => { const m = match(r); return `<button type="button" class="pick" data-action="plan-add" data-day="${day}" data-slot="${slot}" data-id="${r.id}"><img src="${esc(r.image)}" alt="" loading="lazy"><span><span class="t">${esc(r.title)}</span><span class="sub">${fmtMins(r.total)} · ${CAT_LABEL[r.category]}</span></span>${ring(m)}</button>`; }).join('') || '<p class="muted" style="padding:12px">No matches.</p>';
+      .map(r => { const m = match(r); return `<button type="button" class="pick" data-action="plan-add" data-day="${day}" data-slot="${slot}" data-id="${r.id}"><img src="${esc(tiny(r.image))}" alt="" loading="lazy"><span><span class="t">${esc(r.title)}</span><span class="sub">${fmtMins(r.total)} · ${CAT_LABEL[r.category]}</span></span>${ring(m)}</button>`; }).join('') || '<p class="muted" style="padding:12px">No matches.</p>';
     openSheet(`Add ${slot} for ${esc(fmtDay(d, { weekday: 'long', month: 'short', day: 'numeric' }))}`,
       `<label class="field" for="sheetQ"><span class="sr-only">Search recipes</span>${icon('search')}<input class="input" id="sheetQ" type="search" placeholder="Search recipes" autocomplete="off"></label>${peopleStepper(people || (+state.prefs.household > 0 ? +state.prefs.household : 4))}<label class="lbl" for="planNote" style="margin-top:10px">Note <span class="muted" style="font-weight:400">(optional)</span></label><input class="input plain" id="planNote" maxlength="300" autocomplete="off" placeholder="e.g. double it for guests, use leftover rice" value="${esc(note || '')}">`,
       rows(''), () => { const i = $('#sheetQ'); i.addEventListener('input', () => { $('#sheetBody').innerHTML = rows(i.value.trim()); }); setTimeout(() => i.focus(), 30); });
@@ -1570,7 +1576,7 @@
     if (hidden) parts.push(state.showAllergens
       ? `showing ${hidden} with your allergens <button type="button" class="linkish" data-action="toggle-allergens">Hide them</button>`
       : `${hidden} hidden for your allergies <button type="button" class="linkish" data-action="toggle-allergens">Show</button>`);
-    return parts.length ? ` · ${parts.join(' · ')} · <a href="#welcome" class="linkish">Change</a>` : '';
+    return parts.length ? `${cap(parts.join(' · '))} · <a href="#welcome" class="linkish">Change</a>` : '';
   }
 
   /* ---------- ratings ---------- */
@@ -1763,8 +1769,8 @@
   /* ---------- profiles ---------- */
   function profileFormHTML(u) {
     return `<form id="profileForm" class="inline-form">
-      <span class="lbl">Avatar</span>
-      <div class="avatar-grid small">${['', ...AVATARS].map(a => `<button type="button" class="avatar-pick" data-action="pick-avatar" data-v="${esc(a)}" aria-pressed="${(u.avatar || '') === a}" aria-label="${a ? 'Avatar ' + a : 'Use my initial'}">${a ? esc(a) : initial(u.name)}</button>`).join('')}</div>
+      <details class="avatar-fold"><summary><span class="lbl">Avatar</span><span class="avatar-now" aria-hidden="true">${u.avatar ? esc(u.avatar) : initial(u.name)}</span><span class="linkish">Change</span></summary>
+      <div class="avatar-grid small">${['', ...AVATARS].map(a => `<button type="button" class="avatar-pick" data-action="pick-avatar" data-v="${esc(a)}" aria-pressed="${(u.avatar || '') === a}" aria-label="${a ? 'Avatar ' + a : 'Use my initial'}">${a ? esc(a) : initial(u.name)}</button>`).join('')}</div></details>
       <label class="lbl" for="newName">Display name</label>
       <input class="input plain" id="newName" maxlength="40" value="${esc(u.name)}" required>
       <label class="lbl" for="newBio">Bio <span class="muted">shown when people tap your name</span></label>
@@ -1837,7 +1843,7 @@
     renderNav(currentView);
     openSheet(`Happy birthday, ${esc(u.name)}!`, '', `<div class="form birthday">
       <p class="lede">Here’s a little gift from the PantryPilot kitchen: ${CAKES.length} special cake recipes, saved to your Library to keep.</p>
-      <div>${CAKES.map(c => byId.get(c.id)).filter(Boolean).map(c => `<div class="rrow"><img src="${esc(c.image)}" alt=""><div style="min-width:0"><a href="#recipe-${c.id}" data-action="close-sheet">${esc(c.title)}</a><div class="sub">${fmtMins(c.total)} · ${cap(c.skill_level)}</div></div><span></span></div>`).join('')}</div>
+      <div>${CAKES.map(c => byId.get(c.id)).filter(Boolean).map(c => `<div class="rrow"><img src="${esc(tiny(c.image))}" alt="" loading="lazy"><div style="min-width:0"><a href="#recipe-${c.id}" data-action="close-sheet">${esc(c.title)}</a><div class="sub">${fmtMins(c.total)} · ${cap(c.skill_level)}</div></div><span></span></div>`).join('')}</div>
       <a class="btn primary" href="#saved" data-action="close-sheet">See them in your Library</a>
     </div>`, () => { sheet.dataset.kind = 'birthday'; });
   }
@@ -1873,7 +1879,7 @@
       case 'ob-house': obDraft().household = +v; refresh(); break;
       case 'ob-cuisine': obDraft().cuisines = toggleIn(obDraft().cuisines, v); el.setAttribute('aria-pressed', obDraft().cuisines.includes(v)); break;
       case 'ob-avatar': obReadAbout(); obDraft().avatar = v; $$('[data-action="ob-avatar"]').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === v)); break;
-      case 'pick-avatar': $$('[data-action="pick-avatar"]').forEach(b => b.setAttribute('aria-pressed', b === el)); break;
+      case 'pick-avatar': { $$('[data-action="pick-avatar"]').forEach(b => b.setAttribute('aria-pressed', b === el)); const now = el.closest('details')?.querySelector('.avatar-now'); if (now) now.textContent = el.textContent; break; }
       case 'copy-invite': {
         const input = $('#inviteLink');
         try { await navigator.clipboard.writeText(input.value); toast('Invite link copied. Send it to a friend.'); }
@@ -1957,7 +1963,7 @@
   };
   const guestHead = () => `<header class="guest-head"><a class="brand" href="#home">${brandHTML}</a>
     <div class="guest-actions"><button type="button" class="btn small" data-action="auth-open" data-mode="signin">Sign in</button><button type="button" class="btn small primary" data-action="auth-open" data-mode="signup">Create account</button></div></header>`;
-  const guestCard = r => `<a class="g-card" href="#recipe-${esc(r.id)}"><img src="${esc(r.image)}" alt="" loading="lazy"><span class="g-card-body"><b>${esc(r.title)}</b><span class="note">${fmtMins(r.total)} · ${esc(CAT_LABEL[r.category] || '')}</span></span></a>`;
+  const guestCard = r => `<a class="g-card" href="#recipe-${esc(r.id)}"><img src="${esc(thumb(r.image))}" alt="" loading="lazy"><span class="g-card-body"><b>${esc(r.title)}</b><span class="note">${fmtMins(r.total)} · ${esc(CAT_LABEL[r.category] || '')}</span></span></a>`;
   function viewHome() {
     const feats = [
       ['kitchen', 'Cook with what you have', 'Tell PantryPilot what is in your kitchen and see every recipe you can make right now.'],
@@ -1973,10 +1979,10 @@
         <div class="home-copy">
           <span class="eyebrow">Your kitchen co-pilot</span>
           <h1>Cook with what you already have.</h1>
-          <p class="lede">PantryPilot shows you what you can make from your pantry, plans your week and builds your shopping list. ${RECIPES.length}+ recipes, free to start.</p>
+          <p class="lede">PantryPilot shows you what you can make from your pantry, plans your week and builds your shopping list. ${Math.floor(RECIPES.length / 10) * 10}+ recipes, free to start.</p>
           <div class="actions"><button type="button" class="btn primary" data-action="auth-open" data-mode="signup">Create a free account</button><button type="button" class="btn" data-action="auth-open" data-mode="signin">I have an account</button></div>
         </div>
-        <div class="home-collage" aria-hidden="true">${hero.map((r, i) => `<img class="c${i}" src="${esc(r.image)}" alt="">`).join('')}</div>
+        <div class="home-collage" aria-hidden="true">${hero.map((r, i) => `<img class="c${i}" src="${esc(thumb(r.image))}" alt="">`).join('')}</div>
       </section>
       <section class="home-feats">${feats.map(([ic, t, d]) => `<div class="feat">${icon(ic)}<b>${t}</b><span>${d}</span></div>`).join('')}</section>
       <section class="lib-section"><div class="section-head"><h2>A taste of what's inside</h2></div>
@@ -2236,8 +2242,9 @@
     return life - Math.round((today() - start) / 864e5);
   }
   const freshTag = k => { const n = daysLeft(k); return n == null ? '' : ` <small class="fresh ${n <= 1 ? 'soon' : ''}">${n <= 0 ? 'use now' : n + 'd'}</small>`; };
-  function useItUpCard() {
-    const items = [...state.pantry].map(k => ({ k, n: daysLeft(k) })).filter(x => x.n != null && x.n <= 2).sort((a, b) => a.n - b.n).slice(0, 4);
+  function useItUpCard(max = 4) {
+    const all = [...state.pantry].map(k => ({ k, n: daysLeft(k) })).filter(x => x.n != null && x.n <= 2).sort((a, b) => a.n - b.n);
+    const items = all.slice(0, max);
     if (!items.length) return '';
     return `<section class="panel useup" aria-labelledby="useupTitle">
       <div class="panel-head"><h2 id="useupTitle" style="font-size:20px">Use it up</h2><span class="note">Fresh things to cook with soon</span></div>
@@ -2249,6 +2256,7 @@
           <div class="useup-acts"><button type="button" class="linkish" data-action="fresh-reset" data-key="${esc(k)}">Bought more</button><button type="button" class="linkish" data-action="fresh-gone" data-key="${esc(k)}">Used it up</button></div>
         </div>`;
       }).join('')}
+      ${all.length > items.length ? `<a class="useup-more" href="#pantry">See all ${all.length} in your pantry ${icon('right')}</a>` : ''}
     </section>`;
   }
 
@@ -2331,7 +2339,7 @@
     const show = (fresh.length ? fresh : ready).slice(0, 6);
     openSheet(fresh.length ? `You can now cook ${fresh.length} more recipe${fresh.length === 1 ? '' : 's'}` : 'Your pantry is updated', '', `<div class="form">
       <p class="lede">${ready.length} recipe${ready.length === 1 ? '' : 's'} need nothing else from the store.${fresh.length ? ' Here’s what your shopping just unlocked:' : ready.length ? ' A few ideas:' : ''}</p>
-      <div>${show.map(r => `<div class="rrow"><img src="${esc(r.image)}" alt=""><div style="min-width:0"><a href="#recipe-${r.id}" data-action="close-sheet">${esc(r.title)}</a><div class="sub">${fmtMins(r.total)} · ${CAT_LABEL[r.category] || ''}</div></div><span></span></div>`).join('') || '<p class="note">Nothing is fully covered yet. Recipes that are one or two items away are on the Pantry page.</p>'}</div>
+      <div>${show.map(r => `<div class="rrow"><img src="${esc(tiny(r.image))}" alt="" loading="lazy"><div style="min-width:0"><a href="#recipe-${r.id}" data-action="close-sheet">${esc(r.title)}</a><div class="sub">${fmtMins(r.total)} · ${CAT_LABEL[r.category] || ''}</div></div><span></span></div>`).join('') || '<p class="note">Nothing is fully covered yet. Recipes that are one or two items away are on the Pantry page.</p>'}</div>
       <a class="btn" href="#pantry" data-action="close-sheet">See everything you can cook</a>
     </div>`);
   }
@@ -2429,7 +2437,7 @@
     return `<section class="collections" aria-labelledby="collTitle">
       <div class="section-head"><h2 id="collTitle">Collections</h2></div>
       <div class="coll-row">${list.map(({ c, recs }) => `<a class="coll-card ${inSeason(c) ? 'seasonal' : ''}" href="#collection-${c.id}">
-        <div class="coll-imgs">${recs.slice(0, 3).map(r => `<img src="${esc(r.image)}" alt="" loading="lazy">`).join('')}</div>
+        <div class="coll-imgs">${recs.slice(0, 3).map(r => `<img src="${esc(thumb(r.image))}" alt="" loading="lazy">`).join('')}</div>
         <div class="coll-body">${inSeason(c) ? '<span class="eyebrow">In season</span>' : ''}<b>${esc(c.title)}</b><span class="note">${recs.length} recipes</span></div>
       </a>`).join('')}</div>
     </section>`;

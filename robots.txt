@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://crosbydg1-hash.github.io/pantrypilot/sitemap.xml
